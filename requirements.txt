@@ -1,6 +1,6 @@
 --extra-index-url=https://download.pytorch.org/whl/cu128
 vllm==0.8.0
-torch== 2.5.1
+torch== 2.6.0
 torchaudio==2.6.0
 tokenizers==0.21.0
 transformers==4.49.0
