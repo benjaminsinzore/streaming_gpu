@@ -1,0 +1,277 @@
+/* 950px to 1010px - FIX OVERLAP WITH PROGRESSIVE ADJUSTMENTS */
+@media (min-width: 950px) and (max-width: 1010px) {
+    .container {
+        padding: 20px;
+        align-items: flex-start;
+        justify-content: flex-start;
+        min-width: 615px;
+    }
+
+    .header {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        max-width: none;
+        z-index: 10;
+        width: calc(55% - 40px); /* Reduced from 58% to prevent overlap */
+        min-width: 615px;
+    }
+
+    .content-sections {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        max-width: none;
+        height: calc(100vh - 180px);
+        min-height: 400px;
+        margin-top: 0;
+        min-width: 615px;
+        width: calc(55% - 40px); /* Reduced from 58% to prevent overlap */
+    }
+
+    .vertical-chat-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        z-index: 10;
+        width: calc(35% - 60px); /* Reduced from 38% to prevent overlap */
+        min-width: 350px; /* Reduced from 380px */
+        max-width: 400px; /* Reduced from 450px */
+    }
+
+    /* Ensure conversations-header and main-content have same width */
+    .conversations-header,
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .conversation-card { min-height: 180px; }
+    .conversation-card.expanded { min-height: 500px; }
+
+    .header-icons { display: none; }
+    .header-icons-vertical { display: flex; }
+
+    .desktop-icons-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 20;
+    }
+
+    .pulse-container {
+        height: 240px; /* Reduced from 260px */
+        width: 210px; /* Reduced from 230px */
+        max-width: 100%;
+    }
+
+    .chat-input-container {
+        width: 100%;
+        padding: 1.1rem; /* Reduced from 1.25rem */
+    }
+
+    .text-input {
+        min-height: 3.8rem; /* Reduced from 4rem */
+        max-height: 7.5rem; /* Reduced from 8rem */
+        font-size: 0.82rem; /* Reduced from 0.85rem */
+    }
+
+    /* Progressive adjustments within this range */
+    @media (min-width: 950px) and (max-width: 970px) {
+        .header,
+        .content-sections {
+            width: calc(54% - 40px); /* Slightly wider at the lower end */
+        }
+        
+        .vertical-chat-container {
+            width: calc(36% - 60px); /* Slightly narrower at the lower end */
+            min-width: 360px;
+        }
+    }
+
+    @media (min-width: 970px) and (max-width: 990px) {
+        .header,
+        .content-sections {
+            width: calc(55% - 40px); /* Middle width */
+        }
+        
+        .vertical-chat-container {
+            width: calc(35% - 60px); /* Middle width */
+            min-width: 350px;
+        }
+    }
+
+    @media (min-width: 990px) and (max-width: 1010px) {
+        .header,
+        .content-sections {
+            width: calc(56% - 40px); /* Slightly narrower at the higher end */
+        }
+        
+        .vertical-chat-container {
+            width: calc(34% - 60px); /* Slightly wider at the higher end */
+            min-width: 340px;
+        }
+    }
+
+    /* short-desktop tweaks for this range */
+    @media (max-height: 820px) {
+        .header { top: 15px; left: 15px; }
+        .content-sections { 
+            bottom: 15px; 
+            left: 15px; 
+            height: calc(100vh - 150px); 
+            min-height: 350px; 
+        }
+        .desktop-icons-container { top: 15px; right: 15px; }
+        .vertical-chat-container {
+            bottom: 15px;
+            right: 15px;
+            gap: 1.5rem;
+        }
+        .pulse-container {
+            height: 160px; /* Reduced from 170px */
+            width: 160px; /* Reduced from 170px */
+        }
+        .chat-input-container {
+            padding: 1rem; /* Reduced from 1.1rem */
+        }
+    }
+}
+
+/* 1010px to 1049px - TRANSITION TO NORMAL 1050px+ SIZES */
+@media (min-width: 1010px) and (max-width: 1049px) {
+    .container {
+        padding: 20px;
+        align-items: flex-start;
+        justify-content: flex-start;
+        min-width: 615px;
+    }
+
+    .header {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        max-width: none;
+        z-index: 10;
+        width: calc(52% - 40px); /* Closer to 1050px size */
+        min-width: 615px;
+    }
+
+    .content-sections {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        max-width: none;
+        height: calc(100vh - 180px);
+        min-height: 400px;
+        margin-top: 0;
+        min-width: 615px;
+        width: calc(52% - 40px); /* Closer to 1050px size */
+    }
+
+    .vertical-chat-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        z-index: 10;
+        width: calc(40% - 60px); /* Closer to 1050px size */
+        min-width: 380px;
+        max-width: 450px;
+    }
+
+    /* Progressive adjustments within this transition range */
+    @media (min-width: 1010px) and (max-width: 1030px) {
+        .header,
+        .content-sections {
+            width: calc(52% - 40px);
+        }
+        
+        .vertical-chat-container {
+            width: calc(40% - 60px);
+        }
+    }
+
+    @media (min-width: 1030px) and (max-width: 1049px) {
+        .header,
+        .content-sections {
+            width: calc(51% - 40px); /* Even closer to 1050px */
+        }
+        
+        .vertical-chat-container {
+            width: calc(42% - 60px); /* Even closer to 1050px */
+        }
+    }
+
+    /* Ensure conversations-header and main-content have same width */
+    .conversations-header,
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .conversation-card { min-height: 180px; }
+    .conversation-card.expanded { min-height: 500px; }
+
+    .header-icons { display: none; }
+    .header-icons-vertical { display: flex; }
+
+    .desktop-icons-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 20;
+    }
+
+    .pulse-container {
+        height: 260px; /* Back to normal size */
+        width: 230px; /* Back to normal size */
+        max-width: 100%;
+    }
+
+    .chat-input-container {
+        width: 100%;
+        padding: 1.25rem; /* Back to normal size */
+    }
+
+    .text-input {
+        min-height: 4rem; /* Back to normal size */
+        max-height: 8rem; /* Back to normal size */
+        font-size: 0.85rem; /* Back to normal size */
+    }
+
+    /* short-desktop tweaks for this range */
+    @media (max-height: 820px) {
+        .header { top: 15px; left: 15px; }
+        .content-sections { 
+            bottom: 15px; 
+            left: 15px; 
+            height: calc(100vh - 150px); 
+            min-height: 350px; 
+        }
+        .desktop-icons-container { top: 15px; right: 15px; }
+        .vertical-chat-container {
+            bottom: 15px;
+            right: 15px;
+            gap: 1.5rem;
+        }
+        .pulse-container {
+            height: 170px;
+            width: 170px;
+        }
+        .chat-input-container {
+            padding: 1.1rem;
+        }
+    }
+}

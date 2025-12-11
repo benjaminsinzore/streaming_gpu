@@ -1,0 +1,2 @@
+# No mkdir — folder already exists
+put -r /Users/benjaminsinzore/csm_streaming_cpu/models/basqui-1b-instruct.gguf /home/ecs-assist-user/csm_streaming_cpu/models

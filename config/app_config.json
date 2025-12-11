@@ -1,0 +1,13 @@
+{
+  "system_prompt": "You are a friendly AI.",
+  "model_path": "./finetuned_model",
+  "llm_path": "./models/basqui-1b-instruct.gguf",
+  "reference_audio_path": "./reference.wav",
+  "reference_text": "Hi, how can I help?",
+  "reference_audio_path2": "",
+  "reference_text2": "",
+  "reference_audio_path3": "",
+  "reference_text3": "",
+  "mic_id": "5b72fdd99277ce5389b33f46ec2b1a1e014f9a2e79abf7b1151db0d721e7848f",
+  "output_id": "default"
+}

@@ -1,0 +1,85 @@
+2025-09-16 18:04:10,883 - __main__ - INFO - Loading CSM model: sesame/csm-1b
+2025-09-16 18:09:17,022 - __main__ - INFO - Loading CSM model: sesame/csm-1b
+2025-09-16 18:12:16,874 - __main__ - INFO - Loading CSM model: sesame/csm-1b
+2025-09-16 18:23:21,658 - __main__ - INFO - Loading CSM model: sesame/csm-1b
+2025-09-16 18:29:10,272 - __main__ - INFO - Loading CSM model: sesame/csm-1b
+2025-09-16 18:35:13,550 - huggingface_hub.file_download - WARNING - Error while downloading from https://cdn-lfs-us-1.hf.co/repos/74/81/7481f1ab2b63b84d63d9a1764478ca9a127dcf143195fd58a51a28e3ba57d65a/2e7721144afe38b906d4f1048671da639fe142423f4a26283606ecebe894f4bf?response-content-disposition=inline%3B+filename*%3DUTF-8%27%27model.safetensors%3B+filename%3D%22model.safetensors%22%3B&Expires=1758040172&Policy=eyJTdGF0ZW1lbnQiOlt7IkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc1ODA0MDE3Mn19LCJSZXNvdXJjZSI6Imh0dHBzOi8vY2RuLWxmcy11cy0xLmhmLmNvL3JlcG9zLzc0LzgxLzc0ODFmMWFiMmI2M2I4NGQ2M2Q5YTE3NjQ0NzhjYTlhMTI3ZGNmMTQzMTk1ZmQ1OGE1MWEyOGUzYmE1N2Q2NWEvMmU3NzIxMTQ0YWZlMzhiOTA2ZDRmMTA0ODY3MWRhNjM5ZmUxNDI0MjNmNGEyNjI4MzYwNmVjZWJlODk0ZjRiZj9yZXNwb25zZS1jb250ZW50LWRpc3Bvc2l0aW9uPSoifV19&Signature=BgESbVGS33wR09j7NmLSPlCecKpJfR92Trm1IDmaGD1Mfz5xo2hzakJCBKwDyWJEVHe3AMxoGc49rDJQzxxyr9dy5mKhSvSOxa%7EV8LASW01let5NKS9KlH0SyPUxkHJrfw%7E590URGOP08%7EJqMatlmMC6CxyteEnFbVc%7EDVa2Gy0Y%7E6XZj-urxWyuliIhRq1YTqtaKE4WazhMoUpIKc1Pv78D3OjvCVzR7ksBSP3P91TB4l2C6O4z6fAlqYMwnatiqQbhN%7EiY-J9CloGBCliiXvmn9k6lASec5a2qNNT%7EVHLpyD4aOqF1sNL5hZcryNIS7qWWPpEH44KBOVWdsixaLA__&Key-Pair-Id=K24J24Z295AEI9: HTTPSConnectionPool(host='cdn-lfs-us-1.hf.co', port=443): Read timed out.
+Trying to resume download...
+2025-09-16 18:45:15,920 - __main__ - INFO - Loading CSM model: sesame/csm-1b
+2025-09-16 18:45:54,123 - __main__ - ERROR - Failed to initialize codebook_embedding from Mimi: 'SplitResidualVectorQuantizer' object has no attribute 'codebooks'
+2025-09-16 18:45:54,147 - __main__ - INFO - Falling back to random init for codebook_embedding
+2025-09-16 18:45:54,147 - __main__ - INFO - Applying LoRA to model...
+2025-09-16 18:46:06,951 - __main__ - INFO - Transcribing audio files in: audio_data
+2025-09-16 18:46:44,187 - __main__ - INFO - Transcribed: kanye.mp3 -> Check the accounts. Let's check the bank accounts. I am the king. And it's okay. I ain't got nothing against Kendrick. That man can't rap, bro. That man ain't got one bar, bro. He ain't got one bar. He is Virgil. He's a sweet kid. Top.
+2025-09-16 18:46:44,189 - __main__ - INFO - Transcribed 1 audio files
+2025-09-16 18:46:44,383 - __main__ - INFO - Dataset created with 1 samples
+2025-09-16 18:46:44,384 - __main__ - INFO - Starting finetuning process
+2025-09-16 18:46:44,437 - __main__ - INFO - Calculating initial validation loss...
+2025-09-16 18:46:50,389 - __main__ - INFO - Initial validation loss: 11.864912
+2025-09-16 18:46:50,389 - __main__ - INFO - Starting epoch 1/10
+2025-09-16 18:47:03,735 - __main__ - INFO - Calculating validation loss at step 0...
+2025-09-16 18:47:07,903 - __main__ - INFO - Validation loss: 11.864912
+2025-09-16 18:47:08,645 - __main__ - INFO - Calculating validation loss at end of epoch 1...
+2025-09-16 18:47:11,874 - __main__ - INFO - Epoch 1 validation loss: 11.864912
+2025-09-16 18:47:27,390 - __main__ - INFO - Saved checkpoint to finetuned_model_by_sinzore/checkpoint-epoch-1
+2025-09-16 18:47:27,391 - __main__ - INFO - Starting epoch 2/10
+2025-09-16 18:47:39,159 - __main__ - INFO - Calculating validation loss at step 1...
+2025-09-16 18:47:42,989 - __main__ - INFO - Validation loss: 11.864721
+2025-09-16 18:47:43,353 - __main__ - INFO - Calculating validation loss at end of epoch 2...
+2025-09-16 18:47:46,180 - __main__ - INFO - Epoch 2 validation loss: 11.864721
+2025-09-16 18:48:00,728 - __main__ - INFO - Saved checkpoint to finetuned_model_by_sinzore/checkpoint-epoch-2
+2025-09-16 18:48:00,731 - __main__ - INFO - Starting epoch 3/10
+2025-09-16 18:48:12,093 - __main__ - INFO - Calculating validation loss at step 2...
+2025-09-16 18:48:16,323 - __main__ - INFO - Validation loss: 11.864326
+2025-09-16 18:48:16,823 - __main__ - INFO - Calculating validation loss at end of epoch 3...
+2025-09-16 18:48:19,650 - __main__ - INFO - Epoch 3 validation loss: 11.864326
+2025-09-16 18:48:34,106 - __main__ - INFO - Saved checkpoint to finetuned_model_by_sinzore/checkpoint-epoch-3
+2025-09-16 18:48:34,107 - __main__ - INFO - Starting epoch 4/10
+2025-09-16 18:48:46,591 - __main__ - INFO - Calculating validation loss at step 3...
+2025-09-16 18:48:50,726 - __main__ - INFO - Validation loss: 11.863782
+2025-09-16 18:48:51,128 - __main__ - INFO - Calculating validation loss at end of epoch 4...
+2025-09-16 18:48:53,800 - __main__ - INFO - Epoch 4 validation loss: 11.863782
+2025-09-16 18:49:08,340 - __main__ - INFO - Saved checkpoint to finetuned_model_by_sinzore/checkpoint-epoch-4
+2025-09-16 18:49:08,341 - __main__ - INFO - Starting epoch 5/10
+2025-09-16 18:49:24,138 - __main__ - INFO - Calculating validation loss at step 4...
+2025-09-16 18:49:32,903 - __main__ - INFO - Validation loss: 11.863026
+2025-09-16 18:49:33,626 - __main__ - INFO - Calculating validation loss at end of epoch 5...
+2025-09-16 18:49:39,261 - __main__ - INFO - Epoch 5 validation loss: 11.863026
+2025-09-16 18:49:58,856 - __main__ - INFO - Saved checkpoint to finetuned_model_by_sinzore/checkpoint-epoch-5
+2025-09-16 18:49:58,862 - __main__ - INFO - Starting epoch 6/10
+2025-09-16 18:50:13,921 - __main__ - INFO - Calculating validation loss at step 5...
+2025-09-16 18:50:20,915 - __main__ - INFO - Validation loss: 11.862103
+2025-09-16 18:50:21,380 - __main__ - INFO - Calculating validation loss at end of epoch 6...
+2025-09-16 18:50:24,117 - __main__ - INFO - Epoch 6 validation loss: 11.862103
+2025-09-16 18:50:37,461 - __main__ - INFO - Saved checkpoint to finetuned_model_by_sinzore/checkpoint-epoch-6
+2025-09-16 18:50:37,462 - __main__ - INFO - Starting epoch 7/10
+2025-09-16 18:50:51,078 - __main__ - INFO - Calculating validation loss at step 6...
+2025-09-16 18:50:54,806 - __main__ - INFO - Validation loss: 11.860991
+2025-09-16 18:50:55,092 - __main__ - INFO - Calculating validation loss at end of epoch 7...
+2025-09-16 18:50:57,764 - __main__ - INFO - Epoch 7 validation loss: 11.860991
+2025-09-16 18:51:12,189 - __main__ - INFO - Saved checkpoint to finetuned_model_by_sinzore/checkpoint-epoch-7
+2025-09-16 18:51:12,190 - __main__ - INFO - Starting epoch 8/10
+2025-09-16 18:51:27,444 - __main__ - INFO - Calculating validation loss at step 7...
+2025-09-16 18:51:31,739 - __main__ - INFO - Validation loss: 11.859665
+2025-09-16 18:51:32,221 - __main__ - INFO - Calculating validation loss at end of epoch 8...
+2025-09-16 18:51:35,490 - __main__ - INFO - Epoch 8 validation loss: 11.859665
+2025-09-16 18:51:50,098 - __main__ - INFO - Saved checkpoint to finetuned_model_by_sinzore/checkpoint-epoch-8
+2025-09-16 18:51:50,101 - __main__ - INFO - Starting epoch 9/10
+2025-09-16 18:52:05,396 - __main__ - INFO - Calculating validation loss at step 8...
+2025-09-16 18:52:11,196 - __main__ - INFO - Validation loss: 11.858141
+2025-09-16 18:52:11,701 - __main__ - INFO - Calculating validation loss at end of epoch 9...
+2025-09-16 18:52:15,048 - __main__ - INFO - Epoch 9 validation loss: 11.858141
+2025-09-16 18:52:30,555 - __main__ - INFO - Saved checkpoint to finetuned_model_by_sinzore/checkpoint-epoch-9
+2025-09-16 18:52:30,556 - __main__ - INFO - Starting epoch 10/10
+2025-09-16 18:52:45,804 - __main__ - INFO - Calculating validation loss at step 9...
+2025-09-16 18:52:50,865 - __main__ - INFO - Validation loss: 11.856461
+2025-09-16 18:52:51,534 - __main__ - INFO - Calculating validation loss at end of epoch 10...
+2025-09-16 18:52:54,436 - __main__ - INFO - Epoch 10 validation loss: 11.856461
+2025-09-16 18:53:13,161 - __main__ - INFO - Saved checkpoint to finetuned_model_by_sinzore/checkpoint-epoch-10
+2025-09-16 18:53:18,184 - __main__ - INFO - Final validation loss: 11.856461
+2025-09-16 18:53:45,291 - __main__ - INFO - Finetuning complete! LoRA-based model saved to finetuned_model_by_sinzore/model_lora.safetensors
+2025-09-16 18:53:45,293 - __main__ - INFO - Merging LoRA weights into the base model...
+2025-09-16 18:53:49,145 - __main__ - INFO - Replacing LoRALinear modules with plain nn.Linear...
+2025-09-16 18:56:13,989 - __main__ - INFO - LoRA-merged & replaced model saved to finetuned_model_by_sinzore/model.safetensors
+2025-09-16 18:56:16,380 - __main__ - INFO - Final training visualization saved to finetuned_model_by_sinzore/training_metrics_final.png
+2025-09-16 18:56:16,836 - __main__ - INFO - Finetuning completed successfully!

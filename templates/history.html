@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversation History - AI Companion</title>
+    <script src="https://cdn.tailwindcss.com  "></script>
+</head>
+<body class="bg-gray-950 text-white min-h-screen">
+    <header class="bg-gray-900 p-4 shadow-md">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-indigo-400">AI Companion - History</h1>
+            <div class="flex space-x-4">
+                <a href="/chat" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded transition duration-200">
+                    Back to Chat
+                </a>
+                <button onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition duration-200">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <!-- User Information Section -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 class="text-2xl font-bold mb-4 text-indigo-400">User Profile</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-gray-400">Current User:</p>
+                    <p class="text-white text-lg font-semibold">{{ user_email }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400">User ID:</p>
+                    <p class="text-white text-lg font-semibold">{{ user_id }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400">Account Created:</p>
+                    <p class="text-white text-lg font-semibold" id="accountDate">{{ created_at }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400">Status:</p>
+                    <p class="text-green-400 text-lg font-semibold">✓ Signed In</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Selection Section -->
+        <div class="bg-gray-800 rounded-lg p-6 mb-6">
+            <h2 class="text-2xl font-bold mb-4 text-indigo-400">Select User</h2>
+            <div class="flex flex-col md:flex-row md:items-end space-y-4 md:space-y-0 md:space-x-4">
+                <div class="flex-1">
+                    <label for="userSelect" class="block text-gray-400 mb-2">Choose a user to view their history:</label>
+                    <select id="userSelect" class="w-full bg-gray-700 text-white p-3 rounded border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="">Select a user...</option>
+                        {% for user in all_users %}
+                        <option value="{{ user.id }}" {% if user.id == user_id %}selected{% endif %}>
+                            {{ user.email }} (ID: {{ user.id }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <button onclick="loadSelectedUserHistory()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded transition duration-200 w-full md:w-auto">
+                        Load History
+                    </button>
+                </div>
+                <div>
+                    <button onclick="loadCurrentUserHistory()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded transition duration-200 w-full md:w-auto">
+                        My History
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Selected User Info -->
+        <div id="selectedUserInfo" class="bg-indigo-900 rounded-lg p-4 mb-6 hidden">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-indigo-200">Viewing history for:</p>
+                    <p class="text-white text-lg font-semibold" id="selectedUserName">Loading...</p>
+                </div>
+                <button onclick="clearSelectedUser()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">
+                    Clear Selection
+                </button>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div id="statsSection" class="bg-gray-800 rounded-lg p-4 mb-6 hidden">
+            <div class="flex flex-wrap justify-between items-center"> <!-- Changed to flex-wrap for responsiveness if needed -->
+                <div class="mb-2 md:mb-0"> <!-- Added margin for mobile -->
+                    <p class="text-gray-400">Total Conversations:</p>
+                    <p class="text-white text-xl font-bold" id="totalConversations">0</p>
+                </div>
+                <div class="mb-2 md:mb-0"> <!-- Added margin for mobile -->
+                    <p class="text-gray-400">Total Feedback:</p>
+                    <p class="text-white text-xl font-bold" id="totalFeedback">0</p>
+                </div>
+                <div class="mb-2 md:mb-0"> <!-- Added margin for mobile -->
+                    <p class="text-gray-400">Selected User:</p>
+                    <p class="text-white text-sm" id="statsUserEmail">{{ user_email }}</p>
+                </div>
+                <div>
+                    <p class="text-gray-400">Last Updated:</p>
+                    <p class="text-white text-sm" id="lastUpdated">Just now</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conversations Section -->
+        <section id="conversationsSection" class="mb-8">
+            <h2 class="text-xl font-bold mb-4 text-indigo-400">Conversations</h2>
+            <div id="loadingConversations" class="text-center text-gray-400 py-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400 mx-auto mb-4"></div>
+                <p>Loading conversations...</p>
+            </div>
+
+            <div id="conversationsList" class="space-y-4 hidden">
+                <!-- Conversations will be loaded here -->
+            </div>
+
+            <div id="emptyConversationsState" class="text-center text-gray-400 py-8 hidden">
+                <div class="max-w-md mx-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                    <p class="text-xl mb-2">No conversations found</p>
+                    <p class="mb-4">This user hasn't had any conversations yet.</p>
+                </div>
+            </div>
+
+            <div id="errorConversationsState" class="text-center text-red-400 py-8 hidden">
+                <div class="max-w-md mx-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-xl mb-2">Error loading conversations</p>
+                    <p id="errorMessageConversations" class="mb-4"></p>
+                    <button onclick="loadCurrentUserHistory()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-200">
+                        Try Again (Conversations)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feedback Section -->
+        <section id="feedbackSection">
+            <h2 class="text-xl font-bold mb-4 text-indigo-400">Feedback</h2>
+            <div id="loadingFeedback" class="text-center text-gray-400 py-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-400 mx-auto mb-4"></div>
+                <p>Loading feedback...</p>
+            </div>
+
+            <div id="feedbackList" class="space-y-4 hidden">
+                <!-- Feedback entries will be loaded here -->
+            </div>
+
+            <div id="emptyFeedbackState" class="text-center text-gray-400 py-8 hidden">
+                <div class="max-w-md mx-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-600 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <p class="text-xl mb-2">No feedback found</p>
+                    <p class="mb-4">This user hasn't submitted any feedback yet.</p>
+                </div>
+            </div>
+
+            <div id="errorFeedbackState" class="text-center text-red-400 py-8 hidden">
+                <div class="max-w-md mx-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-red-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p class="text-xl mb-2">Error loading feedback</p>
+                    <p id="errorMessageFeedback" class="mb-4"></p>
+                    <button onclick="loadCurrentUserFeedback()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition duration-200">
+                        Try Again (Feedback)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        let currentSelectedUserId = {{ user_id }};
+        let currentSelectedUserEmail = "{{ user_email }}";
+
+        // Format the account creation date
+        function formatAccountDate() {
+            const accountDateElement = document.getElementById('accountDate');
+            if (accountDateElement) {
+                const date = new Date('{{ created_at }}');
+                accountDateElement.textContent = date.toLocaleDateString() + ' at ' + date.toLocaleTimeString();
+            }
+        }
+
+        // Load conversations for a specific user
+        async function loadConversations(userId = null, userEmail = null) {
+            const loading = document.getElementById('loadingConversations');
+            const conversationsList = document.getElementById('conversationsList');
+            const emptyState = document.getElementById('emptyConversationsState');
+            const errorState = document.getElementById('errorConversationsState');
+
+            loading.classList.remove('hidden');
+            conversationsList.classList.add('hidden');
+            emptyState.classList.add('hidden');
+            errorState.classList.add('hidden');
+
+            // If no user specified, use current user
+            if (!userId) {
+                userId = {{ user_id }};
+                userEmail = "{{ user_email }}";
+            }
+
+            try {
+                const response = await fetch(`/api/user/conversations?user_id=${userId}`);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/login';
+                        return;
+                    }
+                    throw new Error(`Failed to load conversations: ${response.status}`);
+                }
+
+                const conversations = await response.json();
+                
+                loading.classList.add('hidden');
+
+                if (conversations.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return conversations.length; // Return count for stats update
+                }
+
+                conversationsList.innerHTML = '';
+                
+                conversations.forEach(conv => {
+                    const div = document.createElement('div');
+                    div.className = 'bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-750 transition duration-200';
+                    
+                    const date = new Date(conv.timestamp).toLocaleString();
+                    
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="text-sm text-gray-400">${date}</div>
+                            <div class="text-xs bg-gray-700 px-2 py-1 rounded">Conversation #${conv.id}</div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold mr-3 flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-blue-400 font-semibold mb-1">User:</div>
+                                    <div class="text-white bg-gray-700 p-3 rounded">${escapeHtml(conv.user_message)}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white font-bold mr-3 flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-green-400 font-semibold mb-1">AI Companion:</div>
+                                    <div class="text-white bg-gray-700 p-3 rounded">${escapeHtml(conv.ai_message)}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    conversationsList.appendChild(div);
+                });
+
+                conversationsList.classList.remove('hidden');
+                return conversations.length; // Return count for stats update
+
+            } catch (error) {
+                console.error('Error loading conversations:', error);
+                loading.classList.add('hidden');
+                errorState.classList.remove('hidden');
+                document.getElementById('errorMessageConversations').textContent = error.message;
+                return 0; // Return 0 on error for stats update
+            }
+        }
+
+        // Load feedback for a specific user
+        async function loadFeedback(userId = null, userEmail = null) {
+            const loading = document.getElementById('loadingFeedback');
+            const feedbackList = document.getElementById('feedbackList');
+            const emptyState = document.getElementById('emptyFeedbackState');
+            const errorState = document.getElementById('errorFeedbackState');
+
+            loading.classList.remove('hidden');
+            feedbackList.classList.add('hidden');
+            emptyState.classList.add('hidden');
+            errorState.classList.add('hidden');
+
+            // If no user specified, use current user
+            if (!userId) {
+                userId = {{ user_id }};
+                userEmail = "{{ user_email }}";
+            }
+
+            try {
+                const response = await fetch(`/api/user/feedback?user_id=${userId}`);
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        window.location.href = '/login';
+                        return;
+                    }
+                    throw new Error(`Failed to load feedback: ${response.status}`);
+                }
+
+                const feedbackEntries = await response.json();
+                
+                loading.classList.add('hidden');
+
+                if (feedbackEntries.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return feedbackEntries.length; // Return count for stats update
+                }
+
+                feedbackList.innerHTML = '';
+                
+                feedbackEntries.forEach(fb => {
+                    const div = document.createElement('div');
+                    div.className = 'bg-gray-800 p-6 rounded-lg shadow-lg';
+                    
+                    const date = new Date(fb.timestamp).toLocaleString();
+                    
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="text-sm text-gray-400">${date}</div>
+                            <div class="text-xs bg-gray-700 px-2 py-1 rounded">Feedback #${fb.id}</div>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="text-yellow-400 font-semibold mb-1">Type: ${escapeHtml(fb.feedback_type)}</div>
+                                <div class="text-white bg-gray-700 p-3 rounded">${escapeHtml(fb.message)}</div>
+                            </div>
+                        </div>
+                    `;
+                    feedbackList.appendChild(div);
+                });
+
+                feedbackList.classList.remove('hidden');
+                return feedbackEntries.length; // Return count for stats update
+
+            } catch (error) {
+                console.error('Error loading feedback:', error);
+                loading.classList.add('hidden');
+                errorState.classList.remove('hidden');
+                document.getElementById('errorMessageFeedback').textContent = error.message;
+                return 0; // Return 0 on error for stats update
+            }
+        }
+
+        // Load history for selected user from dropdown (both conversations and feedback)
+        async function loadSelectedUserHistory() {
+            const userSelect = document.getElementById('userSelect');
+            const selectedOption = userSelect.options[userSelect.selectedIndex];
+            const selectedUserId = parseInt(userSelect.value, 10); // Parse as integer
+            const selectedUserEmail = selectedOption.text.split(' (ID:')[0];
+            
+            if (!selectedUserId) {
+                alert('Please select a user first');
+                return;
+            }
+
+            currentSelectedUserId = selectedUserId;
+            currentSelectedUserEmail = selectedUserEmail;
+
+            // Load both concurrently and wait for both to finish
+            try {
+                const [convCount, fbCount] = await Promise.all([
+                    loadConversations(selectedUserId, selectedUserEmail),
+                    loadFeedback(selectedUserId, selectedUserEmail)
+                ]);
+
+                // Update stats after both loads finish
+                updateStats(convCount, fbCount, selectedUserEmail);
+
+                // Show selected user info
+                document.getElementById('selectedUserName').textContent = selectedUserEmail;
+                document.getElementById('selectedUserInfo').classList.remove('hidden');
+
+            } catch (error) {
+                console.error('Error loading selected user history:', error);
+                // Stats section might not show if one fails, or you could update with partial counts
+                // Individual load functions handle their own error states.
+            }
+        }
+
+        // Load current user's history (both conversations and feedback)
+        async function loadCurrentUserHistory() {
+            currentSelectedUserId = {{ user_id }};
+            currentSelectedUserEmail = "{{ user_email }}";
+            document.getElementById('userSelect').value = {{ user_id }};
+
+            try {
+                // Load both concurrently and wait for both to finish
+                const [convCount, fbCount] = await Promise.all([
+                    loadConversations({{ user_id }}, "{{ user_email }}"),
+                    loadFeedback({{ user_id }}, "{{ user_email }}")
+                ]);
+
+                // Update stats after both loads finish
+                updateStats(convCount, fbCount, "{{ user_email }}");
+
+                // Hide selected user info when viewing own history
+                document.getElementById('selectedUserInfo').classList.add('hidden');
+
+            } catch (error) {
+                console.error('Error loading user history:', error);
+                // Stats section might not show if one fails, or you could update with partial counts
+                // Individual load functions handle their own error states.
+            }
+        }
+
+        // Load only current user's feedback (for the 'Try Again' button)
+        function loadCurrentUserFeedback() {
+             loadFeedback({{ user_id }}, "{{ user_email }}");
+        }
+
+        // Clear selected user and show current user's history (both)
+        function clearSelectedUser() {
+            loadCurrentUserHistory();
+        }
+
+        async function logout() {
+            try {
+                await fetch('/logout', { method: 'POST' });
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Error logging out:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Update stats display
+        function updateStats(conversationsCount, feedbackCount, userEmail) {
+            const totalConversations = document.getElementById('totalConversations');
+            const totalFeedback = document.getElementById('totalFeedback');
+            const statsUserEmail = document.getElementById('statsUserEmail');
+            const lastUpdated = document.getElementById('lastUpdated');
+            const statsSection = document.getElementById('statsSection');
+
+            if (totalConversations) {
+                totalConversations.textContent = conversationsCount;
+            }
+            if (totalFeedback) {
+                totalFeedback.textContent = feedbackCount;
+            }
+            if (statsUserEmail) {
+                statsUserEmail.textContent = userEmail;
+            }
+            if (lastUpdated) {
+                lastUpdated.textContent = new Date().toLocaleTimeString();
+            }
+            // Ensure the stats section is visible after updating
+            statsSection.classList.remove('hidden');
+        }
+
+        // Load current user's history when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            formatAccountDate();
+            loadCurrentUserHistory(); // Use the updated function
+        });
+
+    </script>
+</body>
+</html>

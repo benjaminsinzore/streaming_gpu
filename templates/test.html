@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Porturs LTD</title>
+    <!-- Link to your CSS file -->
+    <link rel="stylesheet" href="__.css">
+</head>
+<body>
+    <!-- Your existing HTML content -->
+    <div class="container">
+        <div class="header">
+            <div class="header-top">
+                <div class="user-info">
+                    <div class="logo">Porturs LTD</div>
+                    <!-- Updated user status container - now inline-flex -->
+                    <div class="user-status-container">
+                        <div class="user-status-item">
+                            <span class="text-sm text-gray-500">User:</span>
+                            <span id="currentUserEmail" class="text-sm">{{ user_email }}</span>
+                        </div>
+                        <div class="user-status-item">
+                            <span class="text-sm text-gray-500">Status:</span>
+                            <span id="connectionStatus" class="text-sm text-green-500">Connected</span>
+                        </div>
+                    </div>
+                </div>
+                <!-- Horizontal icons (for tablet and mobile) -->
+                <div class="header-icons">
+                    <div class="icon menu-icon">≡</div>
+                    <div class="icon" title="Feedback">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                        </svg>
+                    </div>
+                    <div class="icon" title="Share">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                            <polyline points="16 6 12 2 8 6"></polyline>
+                            <line x1="12" y1="2" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                </div>
+    
+                <!-- Three horizontal dots with pulse animation -->
+                <div class="dots-pulse">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+        </div>
+        <div class="content-sections">
+            <div class="conversations-header">
+                <h2 class="conversations-title">Conversations</h2>
+                <div class="conversations-filter">
+                    <button class="filter-btn" data-filter="all">All</button>
+                    <button class="filter-btn" data-filter="recent">Recent</button>
+                    <button class="filter-btn" data-filter="starred">Starred</button>
+                </div>
+            </div>
+            <div class="main-content">
+                <!-- Conversation cards will be dynamically inserted here -->
+            </div>
+        </div>
+    </div>
+    <!-- Desktop icons container -->
+    <div class="desktop-icons-container">
+        <div class="icon menu-icon">≡</div>
+        <div class="icon" title="Feedback">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+            </svg>
+        </div>
+        <div class="icon" title="Share">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                <polyline points="16 6 12 2 8 6"></polyline>
+                <line x1="12" y1="2" x2="12" y2="15"></line>
+            </svg>
+        </div>
+    </div>
+    <!-- Vertical container with pulse and chat -->
+    <div class="vertical-chat-container">
+        <!-- Pulse container -->
+        <div class="pulse-container" style="margin-bottom: 1.5rem;">
+            <div class="pulse-circle circle-1"></div>
+            <div class="pulse-circle circle-2"></div>
+            <div class="pulse-circle circle-3"></div>
+            <div class="pulse-ring"></div>
+        </div>
+        <!-- Chat input container -->
+        <div class="chat-input-container" id="chatInputContainer">
+            <div class="p-2 rounded-lg border border-gray-200 shadow-sm">
+                <div class="input-container">
+                    <textarea class="text-input" id="textInput" placeholder="Type your message here..."></textarea>
+                    <div class="input-controls">
+                        <div class="char-count" id="charCount">0/500</div>
+                        <button class="send-btn" id="sendTextBtn" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="send-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19V5m0 0l-7 7m7-7l7 7" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center mt-2 text-xxs text-gray-500">
+                    <div>
+                        Models: <span id="modelStatus" class="text-yellow-600">Loading...</span>
+                    </div>
+                    <div>
+                        Press <kbd class="px-2 py-1 bg-gray-100 rounded text-gray-700">Enter</kbd> to send • 
+                        Press <kbd class="px-2 py-1 bg-gray-100 rounded text-gray-700">Esc</kbd> to interrupt
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Voice input container -->
+        <div class="chat-input-container" id="voiceInputContainer" style="display: none;">
+            <div class="call-controls">
+                <!-- Calldial Icon (Phone) -->
+                <button class="call-control-btn call-dial-btn active" id="callDialBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56-.35-.12-.74-.03-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/>
+                    </svg>
+                </button>
+                
+                <!-- Mute/Unmute Icon -->
+                <button class="call-control-btn mute-btn active" id="muteBtn" style="display: none;">
+                    <svg class="mic-icon" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                    </svg>
+                    <!-- Diagonal slash for muted state -->
+                    <svg class="mute-slash" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" style="display: none; position: absolute;">
+                        <line x1="6" y1="6" x2="18" y2="18" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                </button>
+                
+                <!-- DeclineCall Icon with slash -->
+                <button class="call-control-btn decline-btn inactive" id="declineBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1v3.49c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
+                        <line x1="18" y1="6" x2="6" y2="18" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link to your JavaScript file at the end of the body -->
+    <script src="__.js"></script>
+
+
+    <!-- Menu Overlay -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+
+    <!-- Menu Container -->
+    <div class="menu-container" id="menuContainer">
+        <div class="menu-header">
+            <h3 class="menu-title">Settings</h3>
+            <div class="icon close-menu" id="closeMenu">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </div>
+        </div>
+        
+        <div class="menu-items">
+            <div class="menu-item">
+                <div class="menu-item-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="menu-icon">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                    </svg>
+                    <span class="menu-item-label">Chat</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="chatToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            
+            <div class="menu-item">
+                <div class="menu-item-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="menu-icon">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                    <span class="menu-item-label">Call</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="callToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+
+            <div class="menu-item">
+                <div class="menu-item-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="menu-icon">
+                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
+                    </svg>
+                    <span class="menu-item-label">Feedback</span>
+                </div>
+                <button class="menu-action-btn" data-action="feedback">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 18l3-3 3 3"></path>
+                        <path d="M6 6l3 3 3-3"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="menu-item">
+                <div class="menu-item-content">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="menu-icon">
+                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                        <polyline points="16 6 12 2 8 6"></polyline>
+                        <line x1="12" y1="2" x2="12" y2="15"></line>
+                    </svg>
+                    <span class="menu-item-label">Share</span>
+                </div>
+                <button class="menu-action-btn" data-action="share">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 18l3-3 3 3"></path>
+                        <path d="M6 6l3 3 3-3"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

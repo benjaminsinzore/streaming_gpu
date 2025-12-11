@@ -1,0 +1,4314 @@
+:root {
+    --primary-color: #4f46e5;
+    --primary-dark: #4338ca;
+    --border-color: #e5e7eb;
+    --text-light: #6b7280;
+}
+* {
+    font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+    box-sizing: border-box;
+}
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #f9fafb;
+    min-height: 100vh;
+    color: #1f2937;
+}
+.container {
+    width: 100%;
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+/* Header Styles */
+.header {
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 15px 20px;
+    background-color: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    border: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+    gap: 15px;
+    position: relative;
+    min-width: 0; /* Allow shrinking if needed */
+}
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    flex-wrap: wrap;
+    flex: 1;
+    align-items: flex-start; /* Align items to the left */
+}
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #4f46e5;
+}
+/* Updated user status container - now inline-flex */
+.user-status-container {
+    display: inline-flex; /* Makes width intrinsic based on content */
+    gap: 15px; /* Space between the two items */
+    flex-wrap: nowrap; /* Prevent wrapping */
+    background-color: #f0f4ff;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid #dbeafe;
+    white-space: nowrap; /* Prevent text wrapping */
+    width: auto; /* Explicitly set to auto */
+    max-width: none; /* Remove any max-width constraints */
+    margin: 0; /* Remove any margins that might affect positioning */
+}
+.user-status-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+}
+.header-icons {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+.header-icons-vertical {
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+.icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    background-color: #f3f4f6;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+.icon:hover {
+    background-color: #e5e7eb;
+    color: #4b5563;
+}
+.menu-icon {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+/* Three horizontal dots with pulse animation */
+.dots-pulse {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #d1d5db; /* gray-300 - lighter gray when not pulsing */
+}
+
+/* Dots pulse animation only when .pulsing class is present */
+.dots-pulse.pulsing .dot {
+    animation: pulse-dot 1.5s infinite ease-in-out;
+}
+
+.dots-pulse.pulsing .dot:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.dots-pulse.pulsing .dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.dots-pulse.pulsing .dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes pulse-dot {
+    0%, 100% {
+        background-color: #d1d5db; /* gray-300 */
+        transform: scale(1);
+    }
+    50% {
+        background-color: #8b5cf6; /* purple-500 - theme color */
+        transform: scale(1.3); /* Slightly larger scale for better visibility */
+    }
+}
+
+/* Status-based colors for dots */
+.dots-pulse.connected .dot {
+    background-color: #10b981; /* Green */
+}
+
+.dots-pulse.loading .dot {
+    background-color: #f59e0b; /* Orange */
+}
+
+.dots-pulse.disconnected .dot {
+    background-color: #ef4444; /* Red */
+}
+
+/* Content Sections */
+.content-sections {
+    width: 100%;
+    max-width: 900px;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    border: 1px solid #e5e7eb;
+    background-color: #fff;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+.conversations-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 0;
+    flex-wrap: wrap;
+    gap: 15px;
+    flex-shrink: 0;
+    width: 100%; /* Ensure full width */
+}
+.conversations-filter {
+    display: flex;
+    gap: 0.5rem;
+}
+.conversations-title {
+    font-size: 1.5rem;
+    margin: 0;
+}
+.filter-btn {
+    padding: 0.375rem 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+    background-color: #f3f4f6;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+.filter-btn:hover {
+    background-color: #e5e7eb;
+    color: #1f2937;
+}
+.filter-btn.active {
+    background-color: #4f46e5;
+    color: white;
+    border-color: #4f46e5;
+}
+.filter-btn.active:hover {
+    background-color: #4338ca;
+}
+.main-content {
+    background-color: #fff;
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    width: 100%; /* Ensure full width */
+}
+.conversation-card {
+    background-color: #ffffff;
+    padding: 20px;
+    margin-bottom: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+    border: 1px solid #e5e7eb;
+    position: relative;
+    transition: all 0.3s ease;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+}
+.conversation-card.expanded {
+    min-height: 500px;
+    z-index: 3;
+}
+.conversation-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    flex: 1;
+    min-height: 0;
+}
+.message-section {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+.message-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    flex-shrink: 0;
+}
+.message-label {
+    font-weight: 600;
+    margin-left: 10px;
+}
+.icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+.user-icon {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+.ai-icon {
+    background-color: #dcfce7;
+    color: #047857;
+}
+.icon-svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+.action-icons {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+.action-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #f3f4f6;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+.action-icon:hover {
+    background-color: #e5e7eb;
+    color: #4b5563;
+}
+.action-icon.active {
+    background-color: #fef3c7;
+    color: #f59e0b;
+}
+.action-icon svg {
+    width: 18px;
+    height: 18px;
+}
+.message-content {
+    padding: 8px 15px;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    line-height: 1.4;
+    display: flex;
+    align-items: center;
+    min-height: 1.5rem;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.message-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 1rem;
+}
+.conversation-card.expanded .message-content {
+    display: block;
+    height: auto;
+    max-height: 200px;
+    padding: 15px;
+    text-align: justify;
+    line-height: 1.6;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+.conversation-card.expanded .message-text {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+/* Custom scrollbar styling for expanded messages */
+.conversation-card.expanded .message-content::-webkit-scrollbar {
+    width: 6px;
+}
+.conversation-card.expanded .message-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+.conversation-card.expanded .message-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+.conversation-card.expanded .message-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+/* Utility classes */
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.mb-4 { margin-bottom: 1rem; }
+.font-semibold { font-weight: 600; }
+.text-blue-700 { color: #1d4ed8; }
+.text-green-700 { color: #047857; }
+.text-sm { font-size: 0.875rem; }
+.text-xs { font-size: 0.75rem; }
+.text-gray-500 { color: #6b7280; }
+.bg-gray-100 { background-color: #f3f4f6; }
+.px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+.py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.rounded { border-radius: 0.25rem; }
+.text-yellow-600 { color: #d97706; }
+
+
+
+
+/* Vertical container with pulse and chat */
+.vertical-chat-container {
+    margin-right: -1rem;
+    position: fixed;
+    z-index: 10;
+    bottom: 1.3rem;
+    right: 2rem;
+    min-width: 570px;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+    overflow: visible;
+}
+.pulse-container {
+    background-color: #f9fafb;
+    padding: 1rem;
+    position: relative;
+    height: 280px;
+    width: 250px;
+    overflow: visible;
+    font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+    border-radius: 12px;
+    align-self: center;
+}
+.pulse-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(79, 70, 229, 0.8);
+    box-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+}
+.pulse-ring::before {
+    content: '';
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(79, 70, 229, 0.3);
+    font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+}
+.pulse-ring::after {
+    content: '';
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(79, 70, 229, 0.2);
+    font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+}
+.pulse-circle {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(79, 70, 229, 0.1);
+    font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+}
+.circle-1 {
+    width: 100px;
+    height: 100px;
+    top: calc(50% - 50px);
+    left: calc(50% - 50px);
+}
+.circle-2 {
+    width: 140px;
+    height: 140px;
+    top: calc(50% - 70px);
+    left: calc(50% - 70px);
+}
+.circle-3 {
+    width: 200px;
+    height: 200px;
+    top: calc(50% - 100px);
+    left: calc(50% - 100px);
+}
+
+/* Pulse animation only when .pulsing class is present */
+.pulse-container.pulsing .pulse-ring::before {
+    animation: pulse 2s infinite;
+}
+
+.pulse-container.pulsing .pulse-ring::after {
+    animation: pulse 2s infinite 0.5s;
+}
+
+.pulse-container.pulsing .pulse-circle {
+    animation: pulse 2s infinite;
+}
+
+.pulse-container.pulsing .pulse-circle.circle-1 {
+    animation-delay: 0.2s;
+}
+
+.pulse-container.pulsing .pulse-circle.circle-2 {
+    animation-delay: 0.4s;
+}
+
+.pulse-container.pulsing .pulse-circle.circle-3 {
+    animation-delay: 0.6s;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.8;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.4;
+    }
+    100% {
+        transform: scale(1.5);
+        opacity: 0;
+    }
+}
+
+/* Status-based colors for pulse container */
+.pulse-container.connected .pulse-ring {
+    background: rgba(16, 185, 129, 0.8);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+}
+.pulse-container.connected .pulse-ring::before {
+    background: rgba(16, 185, 129, 0.3);
+}
+.pulse-container.connected .pulse-ring::after {
+    background: rgba(16, 185, 129, 0.2);
+}
+.pulse-container.connected .pulse-circle {
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.pulse-container.loading .pulse-ring {
+    background: rgba(245, 158, 11, 0.8);
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+}
+.pulse-container.loading .pulse-ring::before {
+    background: rgba(245, 158, 11, 0.3);
+}
+.pulse-container.loading .pulse-ring::after {
+    background: rgba(245, 158, 11, 0.2);
+}
+.pulse-container.loading .pulse-circle {
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.pulse-container.disconnected .pulse-ring {
+    background: rgba(239, 68, 68, 0.8);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+}
+.pulse-container.disconnected .pulse-ring::before {
+    background: rgba(239, 68, 68, 0.3);
+}
+.pulse-container.disconnected .pulse-ring::after {
+    background: rgba(239, 68, 68, 0.2);
+}
+.pulse-container.disconnected .pulse-circle {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.pulse-status {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1rem;
+    color: #4f46e5;
+    font-weight: 600;
+    z-index: 20;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 8px 16px;
+    border-radius: 20px;
+    white-space: nowrap;
+    font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+}
+.pulse-title {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #4f46e5;
+    z-index: 20;
+    font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+}
+/* Chat input container */
+.chat-input-container {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    border: 1px solid #e5e7eb;
+    padding: 1.5rem;
+    font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+}
+.input-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    min-width: 34.5rem;
+}
+.text-input {
+    width: 100%;
+    background-color: #f9fafb;
+    box-shadow: 0 0 0 2px #dcdcdc;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    resize: none;
+    min-height: 4.5rem;
+    max-height: 9rem;
+    overflow-y: auto;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+.text-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+.input-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.char-count {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+}
+.send-btn {
+    background-color: var(--primary-color);
+    color: black;
+    border: none;
+    border-radius: 0.375rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.send-btn:hover {
+    background-color: var(--primary-dark);
+}
+.send-btn:disabled {
+    background-color: rgba(79, 70, 229, 0.2);
+    cursor: not-allowed;
+}
+
+
+/* Responsive adjustments for vertical chat container on short screens */
+/* --- ADDED RESPONSIVE HEIGHT STYLES --- */
+/* Media query for screen heights 820px and below */
+@media (max-height: 820px) {
+    .container {
+        padding: 15px;
+    }
+    .header {
+        margin-bottom: 15px;
+    }
+    .header-top {
+        padding: 12px 15px;
+        gap: 10px;
+    }
+    .logo {
+        font-size: 1.3rem;
+    }
+    .user-status-container {
+        gap: 10px;
+        padding: 8px 12px;
+    }
+    .user-status-item {
+        font-size: 0.8rem;
+    }
+    .icon {
+        width: 36px;
+        height: 36px;
+    }
+    .conversations-header {
+        padding: 15px 15px 0;
+    }
+    .conversations-title {
+        font-size: 1.3rem;
+    }
+    .filter-btn {
+        padding: 0.3rem 0.7rem;
+        font-size: 0.8rem;
+    }
+    .conversation-card {
+        min-height: 120px;
+        padding: 15px;
+        margin-bottom: 1rem;
+    }
+    .conversation-card.expanded {
+        min-height: 350px;
+    }
+    .message-header {
+        margin-bottom: 8px;
+    }
+    .icon-container {
+        width: 2rem;
+        height: 2rem;
+        margin-right: 0.5rem;
+    }
+    .icon-svg {
+        width: 1rem;
+        height: 1rem;
+    }
+    .message-label {
+        font-size: 0.9rem;
+        margin-left: 8px;
+    }
+    .message-content {
+        padding: 6px 12px;
+        min-height: 1.2rem;
+    }
+    .conversation-card.expanded .message-content {
+        padding: 12px;
+        max-height: 150px;
+    }
+    .action-icons {
+        bottom: 10px;
+        right: 10px;
+        gap: 8px;
+    }
+    .action-icon {
+        width: 28px;
+        height: 28px;
+    }
+    .action-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+    .main-content {
+        padding: 15px;
+    }
+}
+
+/* Media query for screen heights 600px and below */
+@media (max-height: 600px) {
+    .container {
+        padding: 10px;
+    }
+    .header {
+        margin-bottom: 10px;
+    }
+    .header-top {
+        padding: 10px 12px;
+        gap: 8px;
+    }
+    .logo {
+        font-size: 1.1rem;
+    }
+    .user-status-container {
+        gap: 8px;
+        padding: 6px 10px;
+    }
+    .user-status-item {
+        font-size: 0.75rem;
+    }
+    .icon {
+        width: 32px;
+        height: 32px;
+    }
+    .conversations-header {
+        padding: 10px 10px 0;
+    }
+    .conversations-title {
+        font-size: 1.1rem;
+    }
+    .filter-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    .conversation-card {
+        min-height: 100px;
+        padding: 12px;
+        margin-bottom: 0.8rem;
+    }
+    .conversation-card.expanded {
+        min-height: 250px;
+    }
+    .message-header {
+        margin-bottom: 6px;
+    }
+    .icon-container {
+        width: 1.75rem;
+        height: 1.75rem;
+        margin-right: 0.4rem;
+    }
+    .icon-svg {
+        width: 0.9rem;
+        height: 0.9rem;
+    }
+    .message-label {
+        font-size: 0.8rem;
+        margin-left: 6px;
+    }
+    .message-content {
+        padding: 5px 10px;
+        min-height: 1rem;
+    }
+    .conversation-card.expanded .message-content {
+        padding: 10px;
+        max-height: 120px;
+    }
+    .action-icons {
+        bottom: 8px;
+        right: 8px;
+        gap: 6px;
+    }
+    .action-icon {
+        width: 24px;
+        height: 24px;
+    }
+    .action-icon svg {
+        width: 14px;
+        height: 14px;
+    }
+    .main-content {
+        padding: 12px;
+    }
+}
+
+@media (max-height: 820px) {
+    .vertical-chat-container {
+        width: 400px;
+        gap: 1.5rem;
+        bottom: 1rem;
+        right: 1.5rem;
+    }
+    .pulse-container {
+        height: 180px;
+        padding: 1.2rem;
+    }
+    .pulse-ring {
+        width: 32px;
+        height: 32px;
+    }
+    .pulse-ring::before {
+        width: 48px;
+        height: 48px;
+    }
+    .pulse-ring::after {
+        width: 64px;
+        height: 64px;
+    }
+    .circle-1 {
+        width: 80px;
+        height: 80px;
+        top: calc(50% - 40px);
+        left: calc(50% - 40px);
+    }
+    .circle-2 {
+        width: 110px;
+        height: 110px;
+        top: calc(50% - 55px);
+        left: calc(50% - 55px);
+    }
+    .circle-3 {
+        width: 160px;
+        height: 160px;
+        top: calc(50% - 80px);
+        left: calc(50% - 80px);
+    }
+    .pulse-status {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+    }
+    .pulse-title {
+        font-size: 1rem;
+        top: 12px;
+        left: 12px;
+    }
+    .chat-input-container {
+        padding: 1.2rem;
+    }
+    .text-input {
+        min-height: 3.5rem;
+        max-height: 7rem;
+        font-size: 0.8rem;
+    }
+    .send-btn {
+        width: 2rem;
+        height: 2rem;
+    }
+}
+
+@media (max-height: 600px) {
+    .vertical-chat-container {
+        width: 350px;
+        gap: 1rem;
+        bottom: 0.8rem;
+        right: 1rem;
+    }
+    .pulse-container {
+        height: 150px;
+        padding: 1rem;
+    }
+    .pulse-ring {
+        width: 28px;
+        height: 28px;
+    }
+    .pulse-ring::before {
+        width: 40px;
+        height: 40px;
+    }
+    .pulse-ring::after {
+        width: 52px;
+        height: 52px;
+    }
+    .circle-1 {
+        width: 60px;
+        height: 60px;
+        top: calc(50% - 30px);
+        left: calc(50% - 30px);
+    }
+    .circle-2 {
+        width: 80px;
+        height: 80px;
+        top: calc(50% - 40px);
+        left: calc(50% - 40px);
+    }
+    .circle-3 {
+        width: 120px;
+        height: 120px;
+        top: calc(50% - 60px);
+        left: calc(50% - 60px);
+    }
+    .pulse-status {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+    }
+    .pulse-title {
+        font-size: 0.9rem;
+        top: 10px;
+        left: 10px;
+    }
+    .chat-input-container {
+        padding: 1rem;
+    }
+    .text-input {
+        min-height: 3rem;
+        max-height: 6rem;
+        font-size: 0.75rem;
+    }
+    .send-btn {
+        width: 1.8rem;
+        height: 1.8rem;
+    }
+    .char-count {
+        font-size: 0.7rem;
+    }
+}
+
+
+
+
+
+
+
+/* ----------------------------------------------------------
+PROGRESSIVE RESPONSIVE SCALING FOR ALL SCREEN SIZES
+---------------------------------------------------------- */
+/* 950px to 1010px - FIX OVERLAP WITH PROGRESSIVE ADJUSTMENTS */
+@media (min-width: 950px) and (max-width: 1010px) {
+    .container {
+        padding: 10px;
+        align-items: flex-start;
+        justify-content: flex-start;
+        min-width: 615px;
+    }
+
+    .header {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        max-width: none;
+        z-index: 10;
+        width: calc(55% - 80px); /* Reduced from 58% to prevent overlap */
+        min-width: 590px;
+        margin-left: -.5rem;
+    }
+
+    .content-sections {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        max-width: none;
+        height: calc(100vh - 150px);
+        min-height: 400px;
+        margin-top: 0;
+        min-width: 590px;
+        width: calc(55% - 40px); /* Reduced from 58% to prevent overlap */
+        margin-left: -.5rem;
+    }
+
+    .vertical-chat-container {
+        position: fixed;
+        bottom: 20px;
+        right: 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        z-index: 10;
+        width: calc(35% - 60px); /* Reduced from 38% to prevent overlap */
+        min-width: 330px; /* Reduced from 380px */
+        max-width: 400px; /* Reduced from 450px */
+        margin-right: -1rem;
+    }
+
+    .header-icons { display: none; }
+    .header-icons-vertical { display: flex; }
+
+    .desktop-icons-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 20;
+    }
+
+    .pulse-container {
+        height: 220px; /* Reduced from 260px */
+        width: 210px; /* Reduced from 230px */
+        max-width: 100%;
+    }
+
+    .chat-input-container {
+        width: 100%;
+        padding: .5rem; /* Reduced from 1.25rem */
+    }
+
+    .text-input {
+        min-height: 3.8rem; /* Reduced from 4rem */
+        max-height: 7.5rem; /* Reduced from 8rem */
+        font-size: 0.82rem; /* Reduced from 0.85rem */
+    }
+    .text-xxs { font-size: 0.5rem; /* 10px */ line-height: 0.875rem; }
+
+
+
+    @media (min-width: 950px) and (max-width: 959px) {
+        .header {
+            min-width: 590px;
+        }
+
+        .content-sections {
+            min-width: 590px;
+        }
+
+        .vertical-chat-container {
+            min-width: 335px;
+        }
+
+        .input-container {
+            min-width: 19.4rem;
+        }
+    }
+
+
+
+    @media (min-width: 960px) and (max-width: 969px) {
+        .header {
+            min-width: 600px;
+        }
+
+        .content-sections {
+            min-width: 600px;
+        }
+
+        .input-container {
+            min-width: 19.2rem;
+        }
+    }
+
+
+
+    @media (min-width: 970px) and (max-width: 979px) {
+        .header {
+            min-width: 610px;
+        }
+
+        .content-sections {
+            min-width: 610px;
+        }
+
+        .input-container {
+            min-width: 19.2rem;
+        }
+    }
+
+
+
+    @media (min-width: 980px) and (max-width: 989px) {
+        .header {
+            min-width: 630px;
+        }
+
+        .content-sections {
+            min-width: 630px;
+        }
+
+        .input-container {
+            min-width: 19.3rem;
+        }
+    }
+
+
+
+    @media (min-width: 990px) and (max-width: 999px) {
+        .header {
+            min-width: 640px;
+        }
+
+        .content-sections {
+            min-width: 640px;
+        }
+
+        .vertical-chat-container{
+            min-width: 325px;
+        }
+
+        .input-container {
+            min-width: 19rem;
+        }
+    }
+
+
+
+    @media (min-width: 1001px) and (max-width: 1009px) {
+        .header {
+            min-width: 650px;
+        }
+
+        .content-sections {
+            min-width: 650px;
+        }
+
+        .vertical-chat-container{
+            min-width: 325px;
+        }
+
+        .input-container {
+            min-width: 19rem;
+        }
+    }
+
+
+}
+
+
+/* 1010px to 1049px - TRANSITION TO NORMAL 1050px+ SIZES */
+@media (min-width: 1010px) and (max-width: 1050px) {
+    .container {
+        padding: 10px;
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+    .header {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        max-width: none;
+        z-index: 10;
+        width: calc(52% - 40px); /* Closer to 1050px size */
+        min-width: 595px;
+    }
+
+    .content-sections {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        max-width: none;
+        height: calc(100vh - 100px);
+        min-height: 550px;
+        margin-top: 0;
+        min-width: 595px;
+        width: calc(52% - 40px); /* Closer to 1050px size */
+    }
+
+    .vertical-chat-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        z-index: 10;
+        width: calc(40% - 60px); /* Closer to 1050px size */
+        min-width: 380px;
+        max-width: 450px;
+        margin-right: .01rem;
+    }
+
+    .input-container {
+        min-width: 21.5rem;
+    }
+
+
+
+    @media (min-width: 1020px) and (max-width: 1029px) {
+        .header {
+            min-width: 610px;
+        }
+
+        .content-sections {
+            min-width: 610px;
+        }
+
+        .vertical-chat-container {
+            min-width: 375px;
+        }
+
+        .input-container {
+            min-width: 21.4rem;
+        }
+    }
+
+
+
+    @media (min-width: 1030px) and (max-width: 1039px) {
+        .header {
+            min-width: 613px;
+        }
+
+        .content-sections {
+            min-width: 613px;
+        }
+
+        .vertical-chat-container {
+            min-width: 380px;
+        }
+
+        .input-container {
+            min-width: 21.8rem;
+        }
+    }
+
+
+
+    @media (min-width: 1040px) and (max-width: 1049px) {
+        .header {
+            min-width: 617px;
+        }
+
+        .content-sections {
+            min-width: 617px;
+            min-height: 550px;
+        }
+
+        .vertical-chat-container {
+            min-width: 384px;
+        }
+
+        .input-container {
+            min-width: 22.1rem;
+        }
+    }
+
+    /* Ensure conversations-header and main-content have same width */
+    .conversations-header,
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .conversation-card { min-height: 180px; }
+    .conversation-card.expanded { min-height: 500px; }
+
+    .header-icons { display: none; }
+    .header-icons-vertical { display: flex; }
+
+    .desktop-icons-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 20;
+    }
+
+    .pulse-container {
+        height: 260px; /* Back to normal size */
+        width: 230px; /* Back to normal size */
+        max-width: 100%;
+    }
+
+    .chat-input-container {
+        width: 100%;
+        padding: .85rem; /* Back to normal size */
+    }
+
+    .text-input {
+        min-height: 2rem; /* Back to normal size */
+        max-height: 8rem; /* Back to normal size */
+        font-size: 0.75rem; /* Back to normal size */
+    }
+    .text-xxs { font-size: 0.6rem; /* 10px */ line-height: 0.875rem; }
+
+    /* short-desktop tweaks for this range */
+    @media (max-height: 820px) {
+        .header { top: 15px; left: 15px; }
+        .content-sections { 
+            bottom: 15px; 
+            left: 15px; 
+            height: calc(100vh - 150px); 
+            min-height: 350px; 
+        }
+        .desktop-icons-container { top: 15px; right: 15px; }
+        .vertical-chat-container {
+            bottom: 15px;
+            right: 15px;
+            gap: 1.5rem;
+        }
+        .pulse-container {
+            height: 170px;
+            width: 170px;
+        }
+        .chat-input-container {
+            padding: 1.1rem;
+        }
+    }
+}
+
+/* 1050px AND ABOVE - PROGRESSIVE WIDENING */
+@media (min-width: 1051px) and (max-width: 1130px) {
+    .container {
+        padding: 20px;
+        align-items: flex-start;
+        justify-content: flex-start;
+        min-width: 625px;
+        max-width: 1800px;
+    }
+
+    .header {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        max-width: none;
+        z-index: 10;
+        min-width: 625px;
+        width: calc(50% - 40px);
+    }
+
+    .content-sections {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        max-width: none;
+        height: calc(100vh - 180px);
+        min-height: 400px;
+        margin-top: 0;
+        min-width: 625px;
+        width: calc(50% - 40px);
+    }
+
+    /* Responsive vertical chat container */
+    .vertical-chat-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        z-index: 10;
+        width: calc(45% - 75px);
+        min-width: 200px;
+        max-width: 700px;
+        margin-right: .01rem;
+    }
+
+
+
+    .input-container {
+        min-width: 22.8rem;
+    }
+    .text-xxs { font-size: 0.6rem; /* 10px */ line-height: 0.875rem; }
+
+    @media (min-width: 1060px) and (max-width: 1069px) {
+        .header {
+            min-width: 630px;
+        }
+
+        .content-sections {
+            min-width: 630px;
+        }
+
+        .vertical-chat-container {
+            min-width: 205px;
+        }
+
+        .input-container {
+            min-width: 23.1rem;
+        }
+    }
+
+    @media (min-width: 1070px) and (max-width: 1079px) {
+        .header {
+            min-width: 635px;
+        }
+
+        .content-sections {
+            min-width: 635px;
+        }
+
+        .vertical-chat-container {
+            min-width: 205px;
+        }
+
+        .input-container {
+            min-width: 23.5rem;
+        }
+    }
+
+    @media (min-width: 1080px) and (max-width: 1089px) {
+        .header {
+            min-width: 641px;
+        }
+
+        .content-sections {
+            min-width: 641px;
+        }
+
+        .vertical-chat-container {
+            min-width: 200px;
+        }
+
+        .input-container {
+            min-width: 23.9rem;
+        }
+    }
+
+    @media (min-width: 1090px) and (max-width: 1109px) {
+        .header {
+            min-width: 646px;
+        }
+
+        .content-sections {
+            min-width: 646px;
+        }
+
+        .input-container {
+            min-width: 24.2rem;
+        }
+    }
+
+    @media (min-width: 1110px) and (max-width: 1119px) {
+        .header {
+            min-width: 650px;
+        }
+
+        .content-sections {
+            min-width: 650px;
+        }
+
+        .input-container {
+            min-width: 24.5rem;
+        }
+    }
+
+    @media (min-width: 1120px) and (max-width: 1129px) {
+        .header {
+            min-width: 660px;
+        }
+
+        .content-sections {
+            min-width: 660px;
+        }
+
+        .input-container {
+            min-width: 24.7rem;
+        }
+    }
+
+
+
+    /* Ensure conversations-header and main-content have same width */
+    .conversations-header,
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .conversation-card { min-height: 180px; }
+    .conversation-card.expanded { min-height: 500px; }
+
+    .header-icons { display: none; }
+    .header-icons-vertical { display: flex; }
+
+    .desktop-icons-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 20;
+    }
+
+    /* Pulse container responsiveness */
+    .pulse-container {
+        height: 280px;
+        width: 250px;
+        max-width: 100%;
+    }
+
+    /* Pulse container progressive scaling */
+    @media (min-width: 1400px) {
+        .pulse-container {
+            height: 300px;
+            width: 270px;
+        }
+    }
+
+    @media (min-width: 1600px) {
+        .pulse-container {
+            height: 320px;
+            width: 290px;
+        }
+    }
+
+    @media (min-width: 1800px) {
+        .pulse-container {
+            height: 340px;
+            width: 310px;
+        }
+    }
+
+    @media (min-width: 2000px) {
+        .pulse-container {
+            height: 360px;
+            width: 330px;
+        }
+    }
+
+    /* Chat input container responsiveness */
+    .chat-input-container {
+        width: 100%;
+    }
+
+
+    /* short-desktop tweaks */
+    @media (max-height: 820px) {
+        .header { top: 15px; left: 15px; }
+        .content-sections { 
+            bottom: 15px; 
+            left: 15px; 
+            height: calc(100vh - 150px); 
+            min-height: 350px; 
+        }
+        .desktop-icons-container { top: 15px; right: 15px; }
+        .vertical-chat-container {
+            bottom: 15px;
+            right: 15px;
+            gap: 1.5rem;
+        }
+        .pulse-container {
+            height: 180px;
+            width: 180px;
+        }
+        .chat-input-container {
+            padding: 1.2rem;
+        }
+    }
+    
+    @media (max-height: 600px) {
+        .header { top: 10px; left: 10px; }
+        .content-sections { 
+            bottom: 10px; 
+            left: 10px; 
+            height: calc(100vh - 120px); 
+            min-height: 300px; 
+        }
+        .desktop-icons-container { top: 10px; right: 10px; gap: 8px; }
+        .vertical-chat-container {
+            bottom: 10px;
+            right: 10px;
+            gap: 1rem;
+        }
+        .pulse-container {
+            height: 150px;
+            width: 150px;
+        }
+        .chat-input-container {
+            padding: 1rem;
+        }
+    }
+}
+
+/* 1050px AND ABOVE - PROGRESSIVE WIDENING */
+@media (min-width: 1131px) and (max-width: 1200px) {
+    .container {
+        padding: 10px;
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+    .header {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        max-width: none;
+        z-index: 10;
+        width: calc(50% - 40px);
+        min-width: 677px;
+    }
+
+    .content-sections {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        max-width: none;
+        height: calc(100vh - 180px);
+        min-height: 400px;
+        margin-top: 0;
+        min-width: 677px;
+        width: calc(50% - 40px);
+    }
+
+    /* Responsive vertical chat container */
+    .vertical-chat-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        z-index: 10;
+        width: calc(45% - 93px);
+        min-width: 400px;
+        max-width: 700px;
+        margin-right: .01rem;
+    }
+    .text-xxs { font-size: 0.7rem; /* 10px */ line-height: 0.875rem; }
+
+
+
+    /* Ensure conversations-header and main-content have same width */
+    .conversations-header,
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .conversation-card { min-height: 180px; }
+    .conversation-card.expanded { min-height: 500px; }
+
+    .header-icons { display: none; }
+    .header-icons-vertical { display: flex; }
+
+    .desktop-icons-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 20;
+    }
+
+    .input-container {
+        min-width: 24.6rem;
+    }
+
+    /* Pulse container responsiveness */
+    .pulse-container {
+        height: 280px;
+        width: 250px;
+        max-width: 100%;
+    }
+
+    @media (min-width: 1160px) and (max-width: 1169px) {
+        .header {
+            min-width: 687px;
+        }
+
+        .content-sections {
+            min-width: 687px;
+        }
+
+        .input-container {
+            min-width: 24.9rem;
+        }
+    }
+
+    @media (min-width: 1170px) and (max-width: 1179px) {
+        .header {
+            min-width: 697px;
+        }
+
+        .content-sections {
+            min-width: 697px;
+        }
+
+        .input-container {
+            min-width: 25.2rem;
+        }
+    }
+
+    @media (min-width: 1180px) and (max-width: 1189px) {
+        .header {
+            min-width: 700px;
+        }
+
+        .content-sections {
+            min-width: 700px;
+        }
+
+        .input-container {
+            min-width: 25.5rem;
+        }
+    }
+
+    @media (min-width: 1190px) and (max-width: 1199px) {
+        .header {
+            min-width: 706px;
+        }
+
+        .content-sections {
+            min-width: 706px;
+        }
+
+        .input-container {
+            min-width: 25.8rem;
+        }
+    }
+
+    @media (min-width: 1200px) {
+        .header {
+            min-width: 710px;
+        }
+
+        .content-sections {
+            min-width: 710px;
+        }
+
+        .input-container {
+            min-width: 26.3rem;
+        }
+    }
+
+    /* Pulse container progressive scaling */
+    @media (min-width: 1400px) {
+        .pulse-container {
+            height: 300px;
+            width: 270px;
+        }
+    }
+
+    @media (min-width: 1600px) {
+        .pulse-container {
+            height: 320px;
+            width: 290px;
+        }
+    }
+
+    @media (min-width: 1800px) {
+        .pulse-container {
+            height: 340px;
+            width: 310px;
+        }
+    }
+
+    @media (min-width: 2000px) {
+        .pulse-container {
+            height: 360px;
+            width: 330px;
+        }
+    }
+
+    /* Chat input container responsiveness */
+    .chat-input-container {
+        width: 100%;
+    }
+
+
+    /* short-desktop tweaks */
+    @media (max-height: 820px) {
+        .header { top: 15px; left: 15px; }
+        .content-sections { 
+            bottom: 15px; 
+            left: 15px; 
+            height: calc(100vh - 150px); 
+            min-height: 350px; 
+        }
+        .desktop-icons-container { top: 15px; right: 15px; }
+        .vertical-chat-container {
+            bottom: 15px;
+            right: 15px;
+            gap: 1.5rem;
+        }
+        .pulse-container {
+            height: 180px;
+            width: 180px;
+        }
+        .chat-input-container {
+            padding: 1.2rem;
+        }
+    }
+    
+    @media (max-height: 600px) {
+        .header { top: 10px; left: 10px; }
+        .content-sections { 
+            bottom: 10px; 
+            left: 10px; 
+            height: calc(100vh - 120px); 
+            min-height: 300px; 
+        }
+        .desktop-icons-container { top: 10px; right: 10px; gap: 8px; }
+        .vertical-chat-container {
+            bottom: 10px;
+            right: 10px;
+            gap: 1rem;
+        }
+        .pulse-container {
+            height: 150px;
+            width: 150px;
+        }
+        .chat-input-container {
+            padding: 1rem;
+        }
+    }
+}
+
+/* 1050px AND ABOVE - PROGRESSIVE WIDENING */
+@media (min-width: 1201px) and (max-width: 1300px) {
+    .container {
+        padding: 20px;
+        align-items: flex-start;
+        justify-content: flex-start;
+        max-width: 1800px;
+    }
+
+    .header {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        max-width: none;
+        z-index: 10;
+        width: calc(50% - 40px);
+        min-width: 708px;
+    }
+
+    .content-sections {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        max-width: none;
+        height: calc(100vh - 180px);
+        min-height: 400px;
+        margin-top: 0;
+        min-width: 708px;
+        width: calc(50% - 40px);
+    }
+
+    /* Responsive vertical chat container */
+    .vertical-chat-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        z-index: 10;
+        width: calc(45% - 75px);
+        min-width: 400px;
+        max-width: 700px;
+        margin-right: .01rem;
+    }
+    .text-xxs { font-size: 0.78rem; /* 10px */ line-height: 0.875rem; }
+
+
+
+    /* Ensure conversations-header and main-content have same width */
+    .conversations-header,
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .conversation-card { min-height: 180px; }
+    .conversation-card.expanded { min-height: 500px; }
+
+    .header-icons { display: none; }
+    .header-icons-vertical { display: flex; }
+
+    .desktop-icons-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 20;
+    }
+
+    /* Pulse container responsiveness */
+    .pulse-container {
+        height: 280px;
+        width: 250px;
+        max-width: 100%;
+    }
+
+    .input-container {
+        min-width: 27.4rem;
+    }
+
+    @media (min-width: 1220px) and (max-width: 1229px) {
+        .header {
+            min-width: 717px;
+        }
+
+        .content-sections {
+            min-width: 717px;
+        }
+
+        .input-container {
+            min-width: 27.8rem;
+        }
+    }
+
+    @media (min-width: 1230px) and (max-width: 1239px) {
+        .header {
+            min-width: 718px;
+        }
+
+        .content-sections {
+            min-width: 718px;
+        }
+
+        .input-container {
+            min-width: 28rem;
+        }
+    }
+
+    @media (min-width: 1240px) and (max-width: 1249px) {
+        .header {
+            min-width: 725px;
+        }
+
+        .content-sections {
+            min-width: 725px;
+        }
+
+        .input-container {
+            min-width: 28.3rem;
+        }
+    }
+
+    @media (min-width: 1250px) and (max-width: 1259px) {
+        .header {
+            min-width: 730px;
+        }
+
+        .content-sections {
+            min-width: 730px;
+        }
+
+        .input-container {
+            min-width: 28.4rem;
+        }
+    }
+
+    @media (min-width: 1260px) and (max-width: 1269px) {
+        .header {
+            min-width: 738px;
+        }
+
+        .content-sections {
+            min-width: 738px;
+        }
+
+        .input-container {
+            min-width: 28.8rem;
+        }
+    }
+
+    @media (min-width: 1270px) and (max-width: 1279px) {
+        .header {
+            min-width: 742px;
+        }
+
+        .content-sections {
+            min-width: 742px;
+        }
+
+        .input-container {
+            min-width: 29.2rem;
+        }
+    }
+
+    @media (min-width: 1280px) and (max-width: 1289px) {
+        .header {
+            min-width: 746px;
+        }
+
+        .content-sections {
+            min-width: 746px;
+        }
+
+        .input-container {
+            min-width: 29.6rem;
+        }
+    }
+
+    @media (min-width: 1290px) and (max-width: 1300px) {
+        .header {
+            min-width: 753px;
+        }
+
+        .content-sections {
+            min-width: 753px;
+        }
+
+        .input-container {
+            min-width: 30rem;
+        }
+    }
+
+    /* Pulse container progressive scaling */
+    @media (min-width: 1400px) {
+        .pulse-container {
+            height: 300px;
+            width: 270px;
+        }
+    }
+
+    @media (min-width: 1600px) {
+        .pulse-container {
+            height: 320px;
+            width: 290px;
+        }
+    }
+
+    @media (min-width: 1800px) {
+        .pulse-container {
+            height: 340px;
+            width: 310px;
+        }
+    }
+
+    @media (min-width: 2000px) {
+        .pulse-container {
+            height: 360px;
+            width: 330px;
+        }
+    }
+
+    /* Chat input container responsiveness */
+    .chat-input-container {
+        width: 100%;
+    }
+
+
+    /* short-desktop tweaks */
+    @media (max-height: 820px) {
+        .header { top: 15px; left: 15px; }
+        .content-sections { 
+            bottom: 15px; 
+            left: 15px; 
+            height: calc(100vh - 150px); 
+            min-height: 350px; 
+        }
+        .desktop-icons-container { top: 15px; right: 15px; }
+        .vertical-chat-container {
+            bottom: 15px;
+            right: 15px;
+            gap: 1.5rem;
+        }
+        .pulse-container {
+            height: 180px;
+            width: 180px;
+        }
+        .chat-input-container {
+            padding: 1.2rem;
+        }
+    }
+    
+    @media (max-height: 600px) {
+        .header { top: 10px; left: 10px; }
+        .content-sections { 
+            bottom: 10px; 
+            left: 10px; 
+            height: calc(100vh - 120px); 
+            min-height: 300px; 
+        }
+        .desktop-icons-container { top: 10px; right: 10px; gap: 8px; }
+        .vertical-chat-container {
+            bottom: 10px;
+            right: 10px;
+            gap: 1rem;
+        }
+        .pulse-container {
+            height: 150px;
+            width: 150px;
+        }
+        .chat-input-container {
+            padding: 1rem;
+        }
+    }
+}
+
+/* 1050px AND ABOVE - PROGRESSIVE WIDENING */
+@media (min-width: 1301px) and (max-width: 1400px) {
+    .container {
+        padding: 10px;
+        align-items: flex-start;
+        justify-content: flex-start;
+        max-width: 1800px;
+    }
+
+    .header {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        max-width: none;
+        z-index: 10;
+        width: calc(50% - 40px);
+        min-width: 760px;
+    }
+
+    .content-sections {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        max-width: none;
+        height: calc(100vh - 180px);
+        min-height: 400px;
+        margin-top: 0;
+        min-width: 760px;
+        width: calc(50% - 40px);
+    }
+
+    /* Responsive vertical chat container */
+    .vertical-chat-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        z-index: 10;
+        width: calc(45% - 75px);
+        min-width: 400px;
+        max-width: 700px;
+        margin-right: .01rem;
+    }
+    .text-xxs { font-size: 0.78rem; /* 10px */ line-height: 0.875rem; }
+
+
+
+    /* Ensure conversations-header and main-content have same width */
+    .conversations-header,
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .conversation-card { min-height: 180px; }
+    .conversation-card.expanded { min-height: 500px; }
+
+    .header-icons { display: none; }
+    .header-icons-vertical { display: flex; }
+
+    .desktop-icons-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 20;
+    }
+
+    /* Pulse container responsiveness */
+    .pulse-container {
+        height: 280px;
+        width: 250px;
+        max-width: 100%;
+    }
+
+    .input-container {
+        min-width: 30.4rem;
+    }
+
+    @media (min-width: 1311px) and (max-width: 1320px) {
+        .header {
+            min-width: 768px;
+        }
+
+        .content-sections {
+            min-width: 768px;
+        }
+
+        .input-container {
+            min-width: 30.4rem;
+        }
+    }
+
+    @media (min-width: 1321px) and (max-width: 1330px) {
+        .header {
+            min-width: 770px;
+        }
+
+        .content-sections {
+            min-width: 770px;
+        }
+
+        .input-container {
+            min-width: 30.8rem;
+        }
+    }
+
+    @media (min-width: 1331px) and (max-width: 1340px) {
+        .header {
+            min-width: 775px;
+        }
+
+        .content-sections {
+            min-width: 775px;
+        }
+
+        .input-container {
+            min-width: 31.1rem;
+        }
+    }
+
+    @media (min-width: 1341px) and (max-width: 1350px) {
+        .header {
+            min-width: 780px;
+        }
+
+        .content-sections {
+            min-width: 780px;
+        }
+
+        .input-container {
+            min-width: 31.4rem;
+        }
+    }
+
+    @media (min-width: 1351px) and (max-width: 1360px) {
+        .header {
+            min-width: 785px;
+        }
+
+        .content-sections {
+            min-width: 785px;
+        }
+
+        .input-container {
+            min-width: 31.7rem;
+        }
+    }
+
+    @media (min-width: 1361px) and (max-width: 1370px) {
+        .header {
+            min-width: 790px;
+        }
+
+        .content-sections {
+            min-width: 790px;
+        }
+
+        .input-container {
+            min-width: 32rem;
+        }
+    }
+
+    @media (min-width: 1371px) and (max-width: 1380px) {
+        .header {
+            min-width: 795px;
+        }
+
+        .content-sections {
+            min-width: 795px;
+        }
+
+        .input-container {
+            min-width: 32.3rem;
+        }
+    }
+
+    @media (min-width: 1381px) and (max-width: 1390px) {
+        .header {
+            min-width: 800px;
+        }
+
+        .content-sections {
+            min-width: 800px;
+        }
+
+        .input-container {
+            min-width: 32.5rem;
+        }
+    }
+
+    @media (min-width: 1391px) and (max-width: 1400px) {
+        .header {
+            min-width: 807px;
+        }
+
+        .content-sections {
+            min-width: 807px;
+        }
+
+        .input-container {
+            min-width: 32.7rem;
+        }
+    }
+
+    /* Pulse container progressive scaling */
+    @media (min-width: 1400px) {
+        .pulse-container {
+            height: 300px;
+            width: 270px;
+        }
+    }
+
+    @media (min-width: 1600px) {
+        .pulse-container {
+            height: 320px;
+            width: 290px;
+        }
+    }
+
+    @media (min-width: 1800px) {
+        .pulse-container {
+            height: 340px;
+            width: 310px;
+        }
+    }
+
+    @media (min-width: 2000px) {
+        .pulse-container {
+            height: 360px;
+            width: 330px;
+        }
+    }
+
+    /* Chat input container responsiveness */
+    .chat-input-container {
+        width: 100%;
+    }
+
+
+    /* short-desktop tweaks */
+    @media (max-height: 820px) {
+        .header { top: 15px; left: 15px; }
+        .content-sections { 
+            bottom: 15px; 
+            left: 15px; 
+            height: calc(100vh - 150px); 
+            min-height: 350px; 
+        }
+        .desktop-icons-container { top: 15px; right: 15px; }
+        .vertical-chat-container {
+            bottom: 15px;
+            right: 15px;
+            gap: 1.5rem;
+        }
+        .pulse-container {
+            height: 180px;
+            width: 180px;
+        }
+        .chat-input-container {
+            padding: 1.2rem;
+        }
+    }
+    
+    @media (max-height: 600px) {
+        .header { top: 10px; left: 10px; }
+        .content-sections { 
+            bottom: 10px; 
+            left: 10px; 
+            height: calc(100vh - 120px); 
+            min-height: 300px; 
+        }
+        .desktop-icons-container { top: 10px; right: 10px; gap: 8px; }
+        .vertical-chat-container {
+            bottom: 10px;
+            right: 10px;
+            gap: 1rem;
+        }
+        .pulse-container {
+            height: 150px;
+            width: 150px;
+        }
+        .chat-input-container {
+            padding: 1rem;
+        }
+    }
+}
+
+/* 1050px AND ABOVE - PROGRESSIVE WIDENING */
+@media (min-width: 1401px) and (max-width: 1500px) {
+    .container {
+        padding: 10px;
+        align-items: flex-start;
+        justify-content: flex-start;
+        max-width: 1800px;
+    }
+
+    .header {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        max-width: none;
+        z-index: 10;
+        width: calc(50% - 40px);
+        min-width: 815px;
+    }
+
+    .content-sections {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        max-width: none;
+        height: calc(100vh - 180px);
+        min-height: 400px;
+        margin-top: 0;
+        min-width: 815px;
+        width: calc(50% - 40px);
+    }
+
+    /* Responsive vertical chat container */
+    .vertical-chat-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        z-index: 10;
+        width: calc(45% - 75px);
+        min-width: 400px;
+        max-width: 700px;
+        margin-right: .01rem;
+    }
+    .text-xxs { font-size: 0.78rem; /* 10px */ line-height: 0.875rem; }
+
+
+
+    /* Ensure conversations-header and main-content have same width */
+    .conversations-header,
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .conversation-card { min-height: 180px; }
+    .conversation-card.expanded { min-height: 500px; }
+
+    .header-icons { display: none; }
+    .header-icons-vertical { display: flex; }
+
+    .desktop-icons-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 20;
+    }
+
+    /* Pulse container responsiveness */
+    .pulse-container {
+        height: 300px;
+        width: 250px;
+        max-width: 100%;
+    }
+
+    .input-container {
+        min-width: 32.5rem;
+    }
+
+    @media (min-width: 1411px) and (max-width: 1420px) {
+        .header {
+            min-width: 820px;
+        }
+
+        .content-sections {
+            min-width: 820px;
+        }
+
+        .input-container {
+            min-width: 33rem;
+        }
+    }
+
+    @media (min-width: 1421px) and (max-width: 1430px) {
+        .header {
+            min-width: 825px;
+        }
+
+        .content-sections {
+            min-width: 825px;
+        }
+
+        .input-container {
+            min-width: 33.5rem;
+        }
+    }
+
+    @media (min-width: 1431px) and (max-width: 1440px) {
+        .header {
+            min-width: 830px;
+        }
+
+        .content-sections {
+            min-width: 830px;
+        }    
+
+        .input-container {
+            min-width: 33.8rem;
+        }
+    }
+
+    @media (min-width: 1441px) and (max-width: 1450px) {
+        .header {
+            min-width: 835px;
+        }
+
+        .content-sections {
+            min-width: 835px;
+        }    
+
+        .input-container {
+            min-width: 34rem;
+        }
+    }
+
+    @media (min-width: 1451px) and (max-width: 1460px) {
+        .header {
+            min-width: 840px;
+        }
+
+        .content-sections {
+            min-width: 840px;
+        }    
+
+        .input-container {
+            min-width: 34.2rem;
+        }
+    }
+
+    @media (min-width: 1461px) and (max-width: 1470px) {
+        .header {
+            min-width: 845px;
+        }
+
+        .content-sections {
+            min-width: 845px;
+        }    
+
+        .input-container {
+            min-width: 34.5rem;
+        }
+    }
+
+    @media (min-width: 1471px) and (max-width: 1480px) {
+        .header {
+            min-width: 850px;
+        }
+
+        .content-sections {
+            min-width: 850px;
+        }    
+    }
+
+    @media (min-width: 1481px) and (max-width: 1490px) {
+        .header {
+            min-width: 860px;
+        }
+
+        .content-sections {
+            min-width: 860px;
+        }    
+    }
+
+    @media (min-width: 1491px) and (max-width: 1500px) {
+        .header {
+            min-width: 865px;
+        }
+
+        .content-sections {
+            min-width: 865px;
+        }    
+    }
+
+    /* Pulse container progressive scaling */
+    @media (min-width: 1400px) {
+        .pulse-container {
+            height: 300px;
+            width: 270px;
+        }
+    }
+
+    @media (min-width: 1600px) {
+        .pulse-container {
+            height: 320px;
+            width: 290px;
+        }
+    }
+
+    @media (min-width: 1800px) {
+        .pulse-container {
+            height: 340px;
+            width: 310px;
+        }
+    }
+
+    @media (min-width: 2000px) {
+        .pulse-container {
+            height: 360px;
+            width: 330px;
+        }
+    }
+
+    /* Chat input container responsiveness */
+    .chat-input-container {
+        width: 100%;
+    }
+
+
+
+    /* short-desktop tweaks */
+    @media (max-height: 820px) {
+        .header { top: 15px; left: 15px; }
+        .content-sections { 
+            bottom: 15px; 
+            left: 15px; 
+            height: calc(100vh - 150px); 
+            min-height: 350px; 
+        }
+        .desktop-icons-container { top: 15px; right: 15px; }
+        .vertical-chat-container {
+            bottom: 15px;
+            right: 15px;
+            gap: 1.5rem;
+        }
+        .pulse-container {
+            height: 180px;
+            width: 180px;
+        }
+        .chat-input-container {
+            padding: 1.2rem;
+        }
+    }
+    
+    @media (max-height: 600px) {
+        .header { top: 10px; left: 10px; }
+        .content-sections { 
+            bottom: 10px; 
+            left: 10px; 
+            height: calc(100vh - 120px); 
+            min-height: 300px; 
+        }
+        .desktop-icons-container { top: 10px; right: 10px; gap: 8px; }
+        .vertical-chat-container {
+            bottom: 10px;
+            right: 10px;
+            gap: 1rem;
+        }
+        .pulse-container {
+            height: 150px;
+            width: 150px;
+        }
+        .chat-input-container {
+            padding: 1rem;
+        }
+    }
+}
+
+/* 1501px AND ABOVE - EXTRA LARGE DESKTOP */
+@media (min-width: 1501px) {
+    .container {
+        padding: 20px;
+        align-items: flex-start;
+        justify-content: flex-start;
+        max-width: 2000px;
+        margin: 0 auto;
+    }
+
+    .header {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        max-width: none;
+        z-index: 10;
+        width: calc(50% - 40px);
+        min-width: 870px; /* Adjusted from 865px */
+    }
+
+    .content-sections {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        max-width: none;
+        height: calc(100vh - 180px);
+        min-height: 400px;
+        margin-top: 0;
+        min-width: 870px; /* Adjusted from 865px */
+        width: calc(50% - 40px);
+    }
+
+    .vertical-chat-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        z-index: 10;
+        width: calc(45% - 75px);
+        min-width: 400px;
+        max-width: 700px;
+    }
+
+    .input-container {
+        min-width: 35.5rem;
+    }
+
+    /* CRITICAL FIX: Keep desktop-icons-container in the top right */
+    .desktop-icons-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 20;
+    }
+
+    .header-icons { display: none; }
+    .header-icons-vertical { display: flex; }
+
+    .pulse-container {
+        height: 320px;
+        width: 290px;
+        max-width: 100%;
+    }
+
+    /* Progressive scaling for very large screens */
+    @media (min-width: 1600px) {
+        .header {
+            min-width: 900px;
+        }
+        .content-sections {
+            min-width: 900px;
+        }
+        .pulse-container {
+            height: 340px;
+            width: 310px;
+        }
+    }
+
+    @media (min-width: 1800px) {
+        .header {
+            min-width: 950px;
+        }
+        .content-sections {
+            min-width: 950px;
+        }
+        .pulse-container {
+            height: 360px;
+            width: 330px;
+        }
+    }
+
+    @media (min-width: 2000px) {
+        .header {
+            min-width: 1000px;
+        }
+        .content-sections {
+            min-width: 1000px;
+        }
+        .pulse-container {
+            height: 380px;
+            width: 350px;
+        }
+    }
+
+    /* Ensure conversations-header and main-content have same width */
+    .conversations-header,
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .conversation-card { min-height: 180px; }
+    .conversation-card.expanded { min-height: 500px; }
+
+    /* short-desktop tweaks */
+    @media (max-height: 820px) {
+        .header { top: 15px; left: 15px; }
+        .content-sections { 
+            bottom: 15px; 
+            left: 15px; 
+            height: calc(100vh - 150px); 
+            min-height: 350px; 
+        }
+        .desktop-icons-container { 
+            top: 15px; 
+            right: 15px; 
+        }
+        .vertical-chat-container {
+            bottom: 15px;
+            right: 15px;
+            gap: 1.5rem;
+        }
+        .pulse-container {
+            height: 180px;
+            width: 180px;
+        }
+        .chat-input-container {
+            padding: 1.2rem;
+        }
+    }
+    
+    @media (max-height: 600px) {
+        .header { top: 10px; left: 10px; }
+        .content-sections { 
+            bottom: 10px; 
+            left: 10px; 
+            height: calc(100vh - 120px); 
+            min-height: 300px; 
+        }
+        .desktop-icons-container { 
+            top: 10px; 
+            right: 10px; 
+            gap: 8px; 
+        }
+        .vertical-chat-container {
+            bottom: 10px;
+            right: 10px;
+            gap: 1rem;
+        }
+        .pulse-container {
+            height: 150px;
+            width: 150px;
+        }
+        .chat-input-container {
+            padding: 1rem;
+        }
+    }
+}
+
+
+/* 850px to 949px - SMALLER DESKTOP/TABLET */
+@media (min-width: 850px) and (max-width: 949px) {
+    .container {
+        padding: 20px;
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
+
+    .header {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        max-width: none;
+        z-index: 10;
+        width: calc(65% - 40px); /* Even wider */
+        min-width: 550px;
+    }
+
+    .content-sections {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        max-width: none;
+        height: calc(100vh - 180px);
+        min-height: 400px;
+        margin-top: 0;
+        min-width: 550px;
+        width: calc(65% - 40px); /* Even wider */
+    }
+
+    .vertical-chat-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        z-index: 10;
+        width: calc(32% - 60px); /* Even narrower */
+        min-width: 265px;
+        max-width: 420px;
+        margin-right: .01rem;
+    }
+    .text-xxs { font-size: 0.35rem; /* 10px */ line-height: 0.875rem; }
+
+    /* Ensure conversations-header and main-content have same width */
+    .conversations-header,
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .conversation-card { min-height: 160px; }
+    .conversation-card.expanded { min-height: 450px; }
+
+    .header-icons { display: none; }
+    .header-icons-vertical { display: flex; }
+
+    .desktop-icons-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 20;
+    }
+
+    .pulse-container {
+        height: 240px;
+        width: 210px;
+        max-width: 100%;
+    }
+
+    .chat-input-container {
+        width: 100%;
+        padding: 1rem;
+    }
+
+    .text-input {
+        min-height: 3.5rem;
+        max-height: 7rem;
+        font-size: 0.8rem;
+    }
+
+
+
+    @media (min-width: 860px) and (max-width: 869px) {
+        .header {
+            min-width: 557px;
+        }
+
+        .content-sections {
+            min-width: 557px;
+        }
+    }
+
+
+
+    @media (min-width: 870px) and (max-width: 879px) {
+        .header {
+            min-width: 565px;
+        }
+
+        .content-sections {
+            min-width: 565px;
+        }
+
+        .vertical-chat-container{
+            min-width: 270px;
+        }
+    }
+
+
+
+    @media (min-width: 880px) and (max-width: 889px) {
+        .header {
+            min-width: 570px;
+        }
+
+        .content-sections {
+            min-width: 570px;
+        }
+
+        .vertical-chat-container{
+            min-width: 275px;
+        }
+    }
+
+
+
+    @media (min-width: 890px) and (max-width: 899px) {
+        .header {
+            min-width: 575px;
+        }
+
+        .content-sections {
+            min-width: 575px;
+        }
+
+        .vertical-chat-container{
+            min-width: 280px;
+        }
+    }
+
+    @media (min-width: 900px) and (max-width: 909px) {
+        .header {
+            min-width: 580px;
+        }
+
+        .content-sections {
+            min-width: 580px;
+        }
+
+        .vertical-chat-container{
+            min-width: 285px;
+        }
+    }
+
+    @media (min-width: 910px) and (max-width: 919px) {
+        .header {
+            min-width: 585px;
+        }
+
+        .content-sections {
+            min-width: 585px;
+        }
+
+        .vertical-chat-container{
+            min-width: 290px;
+        }
+    }
+
+    @media (min-width: 920px) and (max-width: 929px) {
+        .header {
+            min-width: 590px;
+        }
+
+        .content-sections {
+            min-width: 590px;
+        }
+
+        .vertical-chat-container{
+            min-width: 295px;
+        }
+    }
+
+    @media (min-width: 930px) and (max-width: 939px) {
+        .header {
+            min-width: 595px;
+        }
+
+        .content-sections {
+            min-width: 595px;
+        }
+
+        .vertical-chat-container{
+            min-width: 300px;
+        }
+    }
+
+    @media (min-width: 940px) and (max-width: 949px) {
+        .header {
+            min-width: 600px;
+        }
+
+        .content-sections {
+            min-width: 600px;
+        }
+
+        .vertical-chat-container{
+            min-width: 305px;
+        }
+    }
+
+    /* short-desktop tweaks for this range */
+    @media (max-height: 820px) {
+        .header { top: 15px; left: 15px; }
+        .content-sections { 
+            bottom: 15px; 
+            left: 15px; 
+            height: calc(100vh - 150px); 
+            min-height: 350px; 
+        }
+        .desktop-icons-container { top: 15px; right: 15px; }
+        .vertical-chat-container {
+            bottom: 15px;
+            right: 15px;
+            gap: 1.2rem;
+        }
+        .pulse-container {
+            height: 160px;
+            width: 160px;
+        }
+        .chat-input-container {
+            padding: 0.9rem;
+        }
+    }
+}
+
+/* 768px to 849px - TABLET TRANSITION */
+@media (min-width: 768px) and (max-width: 849px) {
+    .container {
+        padding: 20px;
+        align-items: flex-start;
+        justify-content: flex-start;
+        min-width: 615px;
+    }
+
+    .header {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        max-width: none;
+        z-index: 10;
+        width: calc(72% - 40px); /* Much wider, taking most space */
+        min-width: 737px;
+    }
+
+    .content-sections {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        max-width: none;
+        height: calc(100vh - 180px);
+        min-height: 400px;
+        margin-top: 0;
+        min-width: 737px;
+        width: calc(72% - 40px); /* Much wider, taking most space */
+    }
+
+    .vertical-chat-container {
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        z-index: 10;
+        width: calc(25% - 60px); /* Much narrower, minimal space */
+        min-width: 737px;
+        height: 7.5rem;
+    }
+    .text-xxs { font-size: 0.78rem; /* 10px */ line-height: 0.875rem; }
+
+    .pulse-container {
+        display: none !important;
+    }
+
+    @media (min-width: 775px) and (max-width: 785px) {
+        .header{
+            min-width: 750px;
+        }
+        .content-sections {
+            min-width: 750px;
+        }
+        .vertical-chat-container {
+            min-width: 750px;
+        }
+    }
+
+    @media (min-width: 785px) and (max-width: 795px) {
+        .header{
+            min-width: 765px;
+        }
+        .content-sections {
+            min-width: 765px;
+        }
+        .vertical-chat-container {
+            min-width: 765px;
+        }
+    }
+
+    @media (min-width: 795px) and (max-width: 809px) {
+        .header{
+            min-width: 770px;
+        }
+        .content-sections {
+            min-width: 770px;
+        }
+        .vertical-chat-container {
+            min-width: 770px;
+        }
+    }
+
+    @media (min-width: 810px) and (max-width: 819px) {
+        .header{
+            min-width: 790px;
+        }
+        .content-sections {
+            min-width: 790px;
+        }
+        .vertical-chat-container {
+            min-width: 790px;
+        }
+    }
+
+    @media (min-width: 820px) and (max-width: 829px) {
+        .header{
+            min-width: 795px;
+        }
+        .content-sections {
+            min-width: 795px;
+        }
+        .vertical-chat-container {
+            min-width: 795px;
+        }
+    }
+
+    @media (min-width: 830px) and (max-width: 839px) {
+        .header{
+            min-width: 807px;
+        }
+        .content-sections {
+            min-width: 807px;
+        }
+        .vertical-chat-container {
+            min-width: 807px;
+        }
+    }
+
+    @media (min-width: 840px) and (max-width: 849px) {
+        .header{
+            min-width: 817px;
+        }
+        .content-sections {
+            min-width: 817px;
+        }
+        .vertical-chat-container {
+            min-width: 817px;
+        }
+    }
+
+    /* Ensure conversations-header and main-content have same width */
+    .conversations-header,
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .conversations-header {
+        padding: 15px 15px 0;
+    }
+    .conversations-title {
+        font-size: 1.3rem;
+    }
+
+    .conversation-card {
+        min-height: 140px;
+        padding: 15px;
+    }
+    .conversation-card.expanded {
+        min-height: 400px;
+    }
+
+    .message-content {
+        padding: 6px 12px;
+    }
+    .conversation-card.expanded .message-content {
+        padding: 12px;
+    }
+
+    /* Header icons positioning - only menu icon in top right */
+    .header-icons { 
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    .header-icons .icon:not(.menu-icon) {
+        display: none;
+    }
+    .header-icons-vertical { display: none; }
+
+    /* Three horizontal dots with pulse animation - BELOW menu icon */
+    .dots-pulse {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        justify-content: center;
+        order: 2; /* Ensure dots come after menu icon */
+        width: 100%;
+    }
+    
+    .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: #d1d5db; /* gray-300 - lighter gray when not pulsing */
+    }
+    
+    /* Ensure menu icon comes before dots */
+    .header-icons .menu-icon {
+        order: 1;
+    }
+
+    .desktop-icons-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 20;
+        display: none !important;
+    }
+
+    .pulse-container {
+        height: 200px;
+        width: 180px;
+        max-width: 100%;
+        padding: 0.8rem;
+    }
+
+    .chat-input-container {
+        width: 100%;
+        padding: 0.8rem;
+    }
+
+    .text-input {
+        min-height: 3rem;
+        max-height: 6rem;
+        font-size: 0.75rem;
+        padding: 0.5rem;
+    }
+
+    .send-btn {
+        width: 2rem;
+        height: 2rem;
+    }
+
+    .char-count {
+        font-size: 0.7rem;
+    }
+
+    /* short-desktop tweaks for this range */
+    @media (max-height: 820px) {
+        .header { top: 15px; left: 15px; }
+        .content-sections { 
+            bottom: 15px; 
+            left: 15px; 
+            height: calc(100vh - 150px); 
+            min-height: 350px; 
+        }
+        .desktop-icons-container { top: 15px; right: 15px; }
+        .vertical-chat-container {
+            bottom: 15px;
+            right: 15px;
+            gap: 0.8rem;
+        }
+        .pulse-container {
+            height: 140px;
+            width: 140px;
+            padding: 0.6rem;
+        }
+        .chat-input-container {
+            padding: 0.7rem;
+        }
+        .header-icons {
+            top: 15px;
+            right: 15px;
+        }
+    }
+}
+
+/* BELOW 768px - MOBILE STYLES */
+@media (max-width: 767px) {
+    .container {
+        padding: 15px;
+    }
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 15px;
+        position: relative;
+    }
+    .user-info {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .user-status-container {
+        width: 100%;
+        margin-top: 10px;
+        justify-content: space-between;
+    }
+    /* Header icons positioning - only menu icon in top right */
+    .header-icons {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: auto;
+        justify-content: flex-end;
+        margin-top: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+    .header-icons .icon:not(.menu-icon) {
+        display: none;
+    }
+    .header-icons-vertical {
+        display: none;
+    }
+    
+    /* Three horizontal dots with pulse animation - BELOW menu icon */
+    .dots-pulse {
+        display: flex;
+        gap: 3px;
+        align-items: center;
+        justify-content: center;
+        order: 2; /* Ensure dots come after menu icon */
+        width: 100%;
+    }
+    
+    .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background-color: #d1d5db; /* gray-300 - lighter gray when not pulsing */
+    }
+    
+    /* Ensure menu icon comes before dots */
+    .header-icons .menu-icon {
+        order: 1;
+    }
+    
+    .content-sections {
+        height: calc(100vh - 180px);
+        min-height: 300px;
+    }
+
+    .vertical-chat-container{
+        width: 97%;
+        height: 8.5rem;
+    }
+    .text-xxs { font-size: 0.68rem; /* 10px */ line-height: 0.875rem; }
+
+    .pulse-container {
+        display: none !important;
+    }
+
+
+    /* Ensure conversations-header and main-content have same width */
+    .conversations-header,
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .main-content {
+        padding: 15px 10px;
+    }
+    .conversations-header {
+        padding: 15px 15px 0;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .conversations-title {
+        font-size: 1.25rem;
+    }
+    .conversations-filter {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .filter-btn {
+        flex: 1;
+        text-align: center;
+        padding: 0.5rem 0.75rem;
+    }
+    .conversation-card {
+        min-height: 140px;
+        padding: 15px;
+        margin-bottom: 1rem;
+    }
+    .conversation-card.expanded {
+        min-height: 400px;
+    }
+    .message-header {
+        flex-wrap: wrap;
+    }
+    .message-label {
+        font-size: 0.9rem;
+    }
+    .icon-container {
+        width: 2rem;
+        height: 2rem;
+    }
+    .icon-svg {
+        width: 1rem;
+        height: 1rem;
+    }
+    .message-content {
+        padding: 6px 10px;
+        height: auto;
+        min-height: 1.5rem;
+    }
+    .conversation-card.expanded .message-content {
+        padding: 10px;
+        max-height: 150px;
+    }
+    .action-icons {
+        position: relative;
+        bottom: auto;
+        right: auto;
+        margin-top: 10px;
+        justify-content: flex-end;
+    }
+    .action-icon {
+        width: 28px;
+        height: 28px;
+    }
+    .action-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+    /* Hide desktop icons on mobile */
+    .desktop-icons-container {
+        display: none !important;
+    }
+    /* Adjust height for short mobile screens */
+    @media (max-height: 820px) {
+        .container {
+            padding: 10px;
+        }
+        .header {
+            margin-bottom: 10px;
+        }
+        .content-sections {
+            height: calc(100vh - 150px);
+            min-height: 250px;
+        }
+        .header-icons {
+            top: 10px;
+            right: 10px;
+        }
+    }
+    @media (max-height: 600px) {
+        .container {
+            padding: 8px;
+        }
+        .header {
+            margin-bottom: 8px;
+        }
+        .content-sections {
+            height: calc(100vh - 120px);
+            min-height: 200px;
+        }
+        .header-icons {
+            top: 8px;
+            right: 8px;
+        }
+    }
+}
+
+/* BELOW 768px - MOBILE STYLES */
+@media (min-width: 481px) and (max-width: 587px){
+    .container {
+        padding: 15px;
+    }
+    .header-top {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 15px;
+        position: relative;
+    }
+    .user-info {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .user-status-container {
+        width: 100%;
+        margin-top: 10px;
+        justify-content: space-between;
+    }
+    /* Header icons positioning - only menu icon in top right */
+    .header-icons {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: auto;
+        justify-content: flex-end;
+        margin-top: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+    .header-icons .icon:not(.menu-icon) {
+        display: none;
+    }
+    .header-icons-vertical {
+        display: none;
+    }
+    
+    /* Three horizontal dots with pulse animation - BELOW menu icon */
+    .dots-pulse {
+        display: flex;
+        gap: 3px;
+        align-items: center;
+        justify-content: center;
+        order: 2; /* Ensure dots come after menu icon */
+        width: 100%;
+    }
+    
+    .dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background-color: #d1d5db; /* gray-300 - lighter gray when not pulsing */
+    }
+    
+    /* Ensure menu icon comes before dots */
+    .header-icons .menu-icon {
+        order: 1;
+    }
+    
+    .content-sections {
+        height: calc(100vh - 180px);
+        min-height: 300px;
+    }
+
+    .vertical-chat-container{
+        min-width: 10rem;
+        height: 8.5rem;
+    }
+    .text-xxs { font-size: 0.68rem; /* 10px */ line-height: 0.875rem; }
+
+    .pulse-container {
+        display: none !important;
+    }
+
+
+    /* Ensure conversations-header and main-content have same width */
+    .conversations-header,
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .main-content {
+        padding: 15px 10px;
+    }
+    .conversations-header {
+        padding: 15px 15px 0;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .conversations-title {
+        font-size: 1.25rem;
+    }
+    .conversations-filter {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .filter-btn {
+        flex: 1;
+        text-align: center;
+        padding: 0.5rem 0.75rem;
+    }
+    .conversation-card {
+        min-height: 140px;
+        padding: 15px;
+        margin-bottom: 1rem;
+    }
+    .conversation-card.expanded {
+        min-height: 400px;
+    }
+    .message-header {
+        flex-wrap: wrap;
+    }
+    .message-label {
+        font-size: 0.9rem;
+    }
+    .icon-container {
+        width: 2rem;
+        height: 2rem;
+    }
+    .icon-svg {
+        width: 1rem;
+        height: 1rem;
+    }
+    .message-content {
+        padding: 6px 10px;
+        height: auto;
+        min-height: 1.5rem;
+    }
+    .conversation-card.expanded .message-content {
+        padding: 10px;
+        max-height: 150px;
+    }
+    .action-icons {
+        position: relative;
+        bottom: auto;
+        right: auto;
+        margin-top: 10px;
+        justify-content: flex-end;
+    }
+    .action-icon {
+        width: 28px;
+        height: 28px;
+    }
+    .action-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+    /* Hide desktop icons on mobile */
+    .desktop-icons-container {
+        display: none !important;
+    }
+    /* Adjust height for short mobile screens */
+    @media (max-height: 820px) {
+        .container {
+            padding: 10px;
+        }
+        .header {
+            margin-bottom: 10px;
+        }
+        .content-sections {
+            height: calc(100vh - 150px);
+            min-height: 250px;
+        }
+        .header-icons {
+            top: 10px;
+            right: 10px;
+        }
+    }
+    @media (max-height: 600px) {
+        .container {
+            padding: 8px;
+        }
+        .header {
+            margin-bottom: 8px;
+        }
+        .content-sections {
+            height: calc(100vh - 120px);
+            min-height: 200px;
+        }
+        .header-icons {
+            top: 8px;
+            right: 8px;
+        }
+    }
+}
+
+/* Small mobile styles (below 480px) */
+@media (min-width: 321px) and (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+    .header-top {
+        padding: 10px;
+        position: relative;
+    }
+    .logo {
+        font-size: 1.3rem;
+    }
+    .user-status-container {
+        flex-direction: column;
+        gap: 5px;
+    }
+    /* Header icons positioning - only menu icon in top right */
+    .header-icons {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        width: auto;
+        justify-content: flex-end;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+    .header-icons .icon:not(.menu-icon) {
+        display: none;
+    }
+    
+    /* Three horizontal dots with pulse animation - BELOW menu icon */
+    .dots-pulse {
+        display: flex;
+        gap: 2px;
+        align-items: center;
+        justify-content: center;
+        order: 2; /* Ensure dots come after menu icon */
+        width: 100%;
+    }
+    
+    .dot {
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background-color: #d1d5db; /* gray-300 - lighter gray when not pulsing */
+    }
+    
+    /* Ensure menu icon comes before dots */
+    .header-icons .menu-icon {
+        order: 1;
+    }
+    
+    .content-sections {
+        height: calc(100vh - 160px);
+        min-height: 200px;
+    }
+
+    .desktop-icons-container{
+        display: none !important;
+    }
+
+    .pulse-container {
+        display: none !important;
+    }
+
+    .vertical-chat-container {
+        min-width: 10rem;
+        height: 9.5rem;
+    }
+    .text-xxs { font-size: 0.65rem; /* 10px */ line-height: 0.875rem; }
+
+    /* Ensure conversations-header and main-content have same width */
+    .conversations-header,
+    .main-content {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .main-content {
+        padding: 10px 5px;
+    }
+    .conversations-header {
+        padding: 10px 10px 0;
+    }
+    .conversations-title {
+        font-size: 1.1rem;
+    }
+    .conversation-card {
+        padding: 10px;
+    }
+    .message-header {
+        margin-bottom: 8px;
+    }
+    .message-label {
+        font-size: 0.85rem;
+        margin-left: 8px;
+    }
+    .icon-container {
+        width: 1.75rem;
+        height: 1.75rem;
+        margin-right: 0.5rem;
+    }
+    .message-content {
+        padding: 5px 8px;
+    }
+    .conversation-card.expanded .message-content {
+        padding: 8px;
+        max-height: 120px;
+    }
+    /* Adjust height for very short mobile screens */
+    @media (max-height: 820px) {
+        .content-sections {
+            height: calc(100vh - 140px);
+            min-height: 180px;
+        }
+        .header-icons {
+            top: 8px;
+            right: 8px;
+        }
+    }
+    @media (max-height: 600px) {
+        .content-sections {
+            height: calc(100vh - 110px);
+            min-height: 150px;
+        }
+        .header-icons {
+            top: 6px;
+            right: 6px;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Menu Overlay */
+.menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Menu Container */
+.menu-container {
+    position: fixed;
+    top: 0;
+    right: -300px;
+    width: 280px;
+    height: 100vh;
+    background-color: white;
+    box-shadow: -2px 0 15px rgba(0, 0, 0, 0.1);
+    z-index: 1002; /* Increased from 1000 to be above icons */
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.menu-container.active {
+    right: 0;
+}
+
+/* Menu Header */
+.menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #f9fafb;
+}
+
+.menu-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.close-menu {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background-color: #f3f4f6;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.close-menu:hover {
+    background-color: #e5e7eb;
+}
+
+/* Menu Items */
+.menu-items {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.menu-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.menu-item:last-child {
+    border-bottom: none;
+}
+
+.menu-item-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.menu-icon, .icon {
+    color: #4f46e5;
+}
+
+.menu-item-label {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+/* Switch Styles */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 26px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #d1d5db;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #4f46e5;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* Responsive adjustments for the menu */
+@media (max-width: 480px) {
+    .menu-container {
+        width: 100%;
+        right: -100%;
+    }
+    
+    .menu-container.active {
+        right: 0;
+    }
+}
+
+/* Ensure menu appears above other elements */
+.header-icons, .desktop-icons-container {
+    z-index: 1001; /* Higher than menu overlay */
+}
+
+/* Pulse animation stays below menu */
+.dots-pulse, .pulse-container {
+    z-index: 1;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+.menu-action-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background-color: #f3f4f6;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.menu-action-btn:hover {
+    background-color: #e5e7eb;
+}
+
+
+
+
+
+/* Option 2: Using data-action attributes */
+@media screen and (min-width: 850px) {
+    .menu-item [data-action="feedback"],
+    .menu-item [data-action="share"] {
+        display: none !important;
+    }
+    
+    /* Also hide the entire menu items for Feedback and Share */
+    .menu-item:nth-child(3),
+    .menu-item:nth-child(4) {
+        display: none !important;
+    }
+}
+
+/* Option 3: Add specific classes to the items and hide them */
+/* First, add classes to your HTML for Feedback and Share items */
+/* 
+<div class="menu-item feedback-item">
+<div class="menu-item share-item">
+*/
+
+@media screen and (min-width: 850px) {
+    .dots-pulse,
+    .feedback-item,
+    .share-item {
+        display: none !important;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.call-controls {
+    display: flex;
+    justify-content: space-evenly; /* Equal space between and around items */
+    align-items: center;
+    max-width: 300px; /* Optional: limit the width */
+    margin: 0 auto; /* Center the entire container */
+    padding: 15px 0;
+    gap: 2rem;
+}
+
+.call-control-btn {
+    flex: 0 0 auto; /* Don't grow or shrink */
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1.3rem;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Calldial button (green/active state) */
+.call-dial-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.call-dial-btn:hover {
+    background-color: #45a049;
+    transform: scale(1.1);
+}
+
+/* Mute/Unmute button */
+.mute-btn {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.mute-btn.muted {
+    background-color: #ff5252;
+    color: white;
+}
+
+.mute-btn:hover {
+    background-color: #e0e0e0;
+    transform: scale(1.1);
+}
+
+.mute-btn.muted:hover {
+    background-color: #ff4040;
+}
+
+/* Mute slash overlay */
+.mute-slash {
+    position: absolute;
+    color: #ff5252;
+    font-size: 1.5rem;
+}
+
+.mute-btn.muted .mute-slash {
+    display: block !important;
+}
+
+/* DeclineCall button (red) */
+.decline-btn {
+    background-color: #ff5252;
+    color: white;
+}
+
+.decline-btn:hover {
+    background-color: #ff4040;
+    transform: scale(1.1);
+}
+
+
+
+
+/* Inactive state for all buttons */
+.call-control-btn.inactive {
+    opacity: 0.6;
+    background-color: #e0e0e0 !important;
+    color: #999 !important;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.call-control-btn.inactive:hover {
+    transform: none !important;
+    background-color: #e0e0e0 !important;
+}
+
+/* Specific button inactive states */
+.call-dial-btn.inactive {
+    background-color: #b0d8b0 !important;
+}
+
+.mute-btn.inactive {
+    background-color: #e0e0e0 !important;
+}
+
+.decline-btn.inactive {
+    background-color: #ffb0b0 !important;
+}
+
+/* Keep original styles for active states */
+.call-dial-btn:not(.inactive) {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.mute-btn:not(.inactive) {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.decline-btn:not(.inactive) {
+    background-color: #ff5252;
+    color: white;
+}
