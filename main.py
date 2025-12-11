@@ -428,27 +428,34 @@ def load_whisper_model():
     # Load using the direct local path
     model_id = str(snapshot_path)
 
+    devIce = "cuda" if torch.cuda.is_available() else "cpu"
     whisper_model = AutoModelForSpeechSeq2Seq.from_pretrained(
         model_id,
-        torch_dtype=torch.float32,
+        torch_dtype=torch.float16 if devIce == "cuda" else torch.float32,
         low_cpu_mem_usage=True,
         use_safetensors=True,
         local_files_only=True
     )
-    whisper_model.to("cpu")
+    whisper_model.to(devIce)
+
+    
 
     processor = AutoProcessor.from_pretrained(
         model_id,
         local_files_only=True
     )
 
+    # Check if GPU is available
+    device = 0 if torch.cuda.is_available() else -1  # 0 for first GPU, -1 for CPU
+    dtype = torch.float16 if device != -1 else torch.float32  # Use float16 for GPU
+
     whisper_pipe = pipeline(
         "automatic-speech-recognition",
         model=whisper_model,
         tokenizer=processor.tokenizer,
         feature_extractor=processor.feature_extractor,
-        torch_dtype=torch.float32,
-        device=-1,  # Use CPU
+        torch_dtype=dtype,
+        device=device,  # Use GPU if available
     )
     
     logger.info("Whisper model loaded successfully")
@@ -717,16 +724,29 @@ def process_user_input(user_text, session_id="default"):
 def model_worker(cfg: CompanionConfig):
     global generator, model_thread_running
     logger.info("Model worker thread started")
+    
+    # Determine device (GPU if available, otherwise CPU)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    logger.info(f"Using device: {device}")
+    
+    if device == "cuda":
+        logger.info(f"GPU: {torch.cuda.get_device_name(0)}")
+        # Optional: Print GPU memory info
+        logger.info(f"GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
+    
     if generator is None:
         logger.info("Loading voice model inside worker thread …")
-        generator = load_csm_1b_local(cfg.model_path, "cpu")
-        logger.info("Voice model ready")
+        # Load model on the appropriate device
+        generator = load_csm_1b_local(cfg.model_path, device)
+        logger.info(f"Voice model loaded on {device}")
+    
     while model_thread_running.is_set():
         try:
             request = model_queue.get(timeout=0.1)
             if request is None:
                 break
             text, speaker_id, context, max_ms, temperature, topk = request
+            
             for chunk in generator.generate_stream(
                     text=text,
                     speaker=speaker_id,
@@ -845,12 +865,18 @@ def preprocess_text_for_tts(text):
     cleaned_text = re.sub(r'([.,!?])(\S)', r'\1 \2', cleaned_text)
     return cleaned_text.strip()
 
+
 def audio_generation_thread(text, output_file):
     global is_speaking, interrupt_flag, audio_queue, model_thread_running, current_generation_id, speaking_start_time, generator
     current_generation_id += 1
     this_id = current_generation_id
     interrupt_flag.clear()
     logger.info(f"Starting audio generation for ID: {this_id}")
+    
+    # Check if generator is on GPU
+    device = "cuda" if hasattr(generator, 'device') and generator.device.type == 'cuda' else "cpu"
+    logger.info(f"Generator device: {device}")
+    
     if not audio_gen_lock.acquire(blocking=False):
         logger.warning(f"Audio generation {this_id} - lock acquisition failed, another generation is in progress")
         asyncio.run_coroutine_threadsafe(
@@ -862,6 +888,7 @@ def audio_generation_thread(text, output_file):
             loop
         )
         return
+    
     try:
         start_model_thread()
         interrupt_flag.clear()
@@ -871,6 +898,7 @@ def audio_generation_thread(text, output_file):
         all_audio_chunks = []
         text_lower = text.lower()
         text_lower = preprocess_text_for_tts(text_lower)
+        
         asyncio.run_coroutine_threadsafe(
             message_queue.put({
                 "type": "audio_status",
@@ -880,6 +908,7 @@ def audio_generation_thread(text, output_file):
             loop
         )
         time.sleep(0.2)
+        
         logger.info(f"Sending generating status with ID {this_id}")
         asyncio.run_coroutine_threadsafe(
             message_queue.put({
@@ -890,11 +919,13 @@ def audio_generation_thread(text, output_file):
             loop
         )
         time.sleep(0.2)
+        
         words = text.split()
         avg_wpm = 100
         words_per_second = avg_wpm / 60
         estimated_seconds = len(words) / words_per_second
         max_audio_length_ms = int(estimated_seconds * 1000)
+        
         model_queue.put((
             text_lower,
             config.voice_speaker_id,
@@ -903,8 +934,10 @@ def audio_generation_thread(text, output_file):
             0.8,
             50
         ))
+        
         generation_start = time.time()
         chunk_counter = 0
+        
         while True:
             try:
                 if interrupt_flag.is_set():
@@ -919,6 +952,7 @@ def audio_generation_thread(text, output_file):
                         except queue.Empty:
                             pass
                     break
+                
                 result = model_result_queue.get(timeout=0.1)
                 if result is None:
                     logger.info(f"Audio generation {this_id} - complete")
@@ -926,17 +960,30 @@ def audio_generation_thread(text, output_file):
                 if isinstance(result, Exception):
                     logger.error(f"Audio generation {this_id} - error: {result}")
                     raise result
+                
                 if chunk_counter == 0:
                     first_chunk_time = time.time() - generation_start
                     logger.info(f"Audio generation {this_id} - first chunk latency: {first_chunk_time*1000:.1f}ms")
+                
                 chunk_counter += 1
+                
                 if interrupt_flag.is_set():
                     logger.info(f"Audio generation {this_id} - interrupt flag set during chunk processing")
                     break
+                
                 audio_chunk = result
+                
+                # IMPORTANT: Move to CPU if on GPU, then convert to numpy
+                if audio_chunk.is_cuda:
+                    audio_chunk = audio_chunk.cpu()  # Move from GPU to CPU
+                
                 all_audio_chunks.append(audio_chunk)
-                chunk_array = audio_chunk.cpu().numpy().astype(np.float32)
+                
+                # Convert to numpy
+                chunk_array = audio_chunk.numpy().astype(np.float32)  # Use .numpy() instead of .cpu().numpy()
+                
                 audio_queue.put(chunk_array)
+                
                 if chunk_counter == 1:
                     logger.info(f"Sending first audio chunk with ID {this_id}")
                     asyncio.run_coroutine_threadsafe(
@@ -948,6 +995,7 @@ def audio_generation_thread(text, output_file):
                         loop
                     )
                     time.sleep(0.1)
+                
                 asyncio.run_coroutine_threadsafe(
                     message_queue.put({
                         "type": "audio_chunk",
@@ -958,28 +1006,59 @@ def audio_generation_thread(text, output_file):
                     }),
                     loop
                 )
+                
             except queue.Empty:
                 continue
             except Exception as e:
                 logger.error(f"Audio generation {this_id} - error processing result: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
                 break
+        
         if all_audio_chunks and not interrupt_flag.is_set():
             try:
-                complete_audio = torch.cat(all_audio_chunks)
+                # Ensure all chunks are on CPU before concatenation
+                cpu_chunks = []
+                for chunk in all_audio_chunks:
+                    if chunk.is_cuda:
+                        cpu_chunks.append(chunk.cpu())
+                    else:
+                        cpu_chunks.append(chunk)
+                
+                complete_audio = torch.cat(cpu_chunks)
+                
+                # Save audio
                 save_audio_and_trim(output_file, "default", config.voice_speaker_id, complete_audio, generator.sample_rate)
                 add_segment(text.lower(), config.voice_speaker_id, complete_audio)
+                
                 total_time = time.time() - generation_start
                 total_audio_seconds = complete_audio.size(0) / generator.sample_rate
                 rtf = total_time / total_audio_seconds
                 logger.info(f"Audio generation {this_id} - completed in {total_time:.2f}s, RTF: {rtf:.2f}x")
+                
+                # Optional: Log GPU memory usage
+                if device == "cuda":
+                    logger.info(f"GPU memory allocated: {torch.cuda.memory_allocated() / 1e9:.2f} GB")
+                
             except Exception as e:
                 logger.error(f"Audio generation {this_id} - error saving complete audio: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+    
     except Exception as e:
         import traceback
         logger.error(f"Audio generation {this_id} - unexpected error: {e}\n{traceback.format_exc()}")
+    
     finally:
         is_speaking = False
         audio_queue.put(None)
+        
+        # Clean up GPU memory
+        if device == "cuda":
+            torch.cuda.empty_cache()
+            import gc
+            gc.collect()
+        
         try:
             logger.info(f"Audio generation {this_id} - sending completion status")
             asyncio.run_coroutine_threadsafe(
@@ -992,10 +1071,12 @@ def audio_generation_thread(text, output_file):
             )
         except Exception as e:
             logger.error(f"Audio generation {this_id} - failed to send completion status: {e}")
+        
         with user_input_lock:
             if pending_user_inputs:
                 logger.info(f"Audio generation {this_id} - processing pending inputs")
                 process_pending_inputs()
+        
         logger.info(f"Audio generation {this_id} - releasing lock")
         audio_gen_lock.release()
 
