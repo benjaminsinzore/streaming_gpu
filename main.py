@@ -1,3 +1,7 @@
+import os
+os.environ["FLASH_ATTENTION_DISABLED"] = "1"
+
+
 import asyncio
 import os
 os.environ["OMP_NUM_THREADS"] = "1"
