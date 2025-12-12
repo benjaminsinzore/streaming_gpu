@@ -23,6 +23,10 @@ torch._dynamo.config.suppress_errors = True
 torch._dynamo.reset()
 
 
+torch.backends.cudnn.enabled = False  # Disable cuDNN
+torch.set_float32_matmul_precision('highest')  # Use FP32
+
+
 
 import platform
 import sqlite3
