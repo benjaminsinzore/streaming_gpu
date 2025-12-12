@@ -1,23 +1,23 @@
-
 import asyncio
 import os
+
+# 1. Set compile-disable environment variables FIRST
+os.environ['NO_TORCH_COMPILE'] = '1'
+os.environ['TORCH_COMPILE'] = '0'
+os.environ['TORCHDYNAMO_DISABLE'] = '1'
+os.environ['ONEDNN_PRIMITIVE_CACHE_CAPACITY'] = '0'
+
+# Performance thread settings
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 
+# 2. Now import PyTorch
+import torch
+import torchaudio
 
-
-
-# 1. Core Setting: Disable compilation globally
-os.environ['NO_TORCH_COMPILE'] = '1' # Recommended by CSM documentation[citation:3]
-os.environ['TORCH_COMPILE'] = '0'
-
-# 2. Additional safety: Disable TorchDynamo and suppress related errors
-os.environ['TORCHDYNAMO_DISABLE'] = '1'
+# 3. Configure PyTorch's dynamo AFTER importing torch
 torch._dynamo.config.suppress_errors = True
-torch._dynamo.reset()  # Clear any cached compilation traces
-
-# 3. Deactivate oneDNN primitive cache (relevant for Intel hardware)
-os.environ['ONEDNN_PRIMITIVE_CACHE_CAPACITY'] = '0' # As used in troubleshooting[citation:6]
+torch._dynamo.reset()
 
 
 
@@ -28,8 +28,6 @@ import threading
 import json
 import queue
 from fastapi.websockets import WebSocketState
-import torch
-import torchaudio
 import sounddevice as sd
 import numpy as np
 import whisper
