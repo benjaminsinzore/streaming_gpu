@@ -106,7 +106,7 @@
                     window.location.href = response.url;
                 } else if (response.ok) {
                     // If response is OK but not redirected, try to redirect manually
-                    window.location.href = '/chat';
+                    window.location.href = '/conversations';
                 } else {
                     const error = await response.json();
                     errorDiv.textContent = error.detail || 'Registration failed';
