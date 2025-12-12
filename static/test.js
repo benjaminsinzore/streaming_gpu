@@ -781,6 +781,14 @@ function setupWebSocket() {
     };
     
     ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'error' && data.message.includes('voice') || data.message.includes('audio')) {
+            // Show warning that voice is not available
+            showNotification('Voice synthesis is currently unavailable. Text responses only.', 'warning');
+            // Disable voice-related UI elements
+            document.getElementById('voice-toggle').disabled = true;
+        }
         try {
             const data = JSON.parse(event.data);
             console.log('WebSocket message received:', data.type);
@@ -834,8 +842,31 @@ function setupWebSocket() {
         } catch (error) {
             console.error('Error parsing WebSocket message:', error);
         }
+        
     };
 }
+
+
+// Periodically check system status
+async function checkSystemStatus() {
+    try {
+        const response = await fetch('/api/debug/voice-model');
+        const status = await response.json();
+        
+        if (!status.generator_loaded || !status.models_loaded) {
+            // Voice not available
+            updateUIVoiceStatus(false);
+        } else {
+            updateUIVoiceStatus(true);
+        }
+    } catch (error) {
+        console.error('Failed to check system status:', error);
+    }
+}
+
+// Call on page load
+document.addEventListener('DOMContentLoaded', checkSystemStatus);
+
 
 // Function to update conversations from server data
 function updateConversationsFromServer(serverConversations) {
