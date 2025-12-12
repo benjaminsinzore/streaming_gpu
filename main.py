@@ -3,6 +3,24 @@ import asyncio
 import os
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
+
+
+
+
+# 1. Core Setting: Disable compilation globally
+os.environ['NO_TORCH_COMPILE'] = '1' # Recommended by CSM documentation[citation:3]
+os.environ['TORCH_COMPILE'] = '0'
+
+# 2. Additional safety: Disable TorchDynamo and suppress related errors
+os.environ['TORCHDYNAMO_DISABLE'] = '1'
+torch._dynamo.config.suppress_errors = True
+torch._dynamo.reset()  # Clear any cached compilation traces
+
+# 3. Deactivate oneDNN primitive cache (relevant for Intel hardware)
+os.environ['ONEDNN_PRIMITIVE_CACHE_CAPACITY'] = '0' # As used in troubleshooting[citation:6]
+
+
+
 import platform
 import sqlite3
 import time
@@ -508,7 +526,7 @@ def initialize_models(config_data: CompanionConfig):
     logger.info(f"LLM model path: {os.path.abspath(config_data.llm_path)}")
     logger.info(f"Embedding model for RAG: {config_data.embedding_model}")
     logger.info(f"Voice model speaker ID: {config_data.voice_speaker_id}")
-    logger.info(f"Voice synthesis model path (cfg.model_path): {os.path.abspath(config_data.model_path)}")
+    
     # Add voice model path if it's in config (adjust field name as needed)
     if hasattr(config_data, 'tts_model_path'):
         logger.info(f"Voice/TTS model path: {os.path.abspath(config_data.tts_model_path)}")
