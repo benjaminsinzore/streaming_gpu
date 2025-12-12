@@ -498,16 +498,26 @@ def transcribe_audio(audio_data, sample_rate):
     except:
         return "[Transcription error]"
 
+
 def initialize_models(config_data: CompanionConfig):
     global generator, llm, rag, vad_processor, config, models_loaded
     config = config_data
-    
+
+    # --- Log model paths early ---
+    logger.info(f"LLM model path: {os.path.abspath(config_data.llm_path)}")
+    logger.info(f"Embedding model for RAG: {config_data.embedding_model}")
+    logger.info(f"Voice model speaker ID: {config_data.voice_speaker_id}")
+    # Add voice model path if it's in config (adjust field name as needed)
+    if hasattr(config_data, 'tts_model_path'):
+        logger.info(f"Voice/TTS model path: {os.path.abspath(config_data.tts_model_path)}")
+    # ---
+
     logger.info("Loading LLM...")
     llm = LLMInterface(config_data.llm_path, config_data.max_tokens)
-    
+
     logger.info("Loading RAG...")
     rag = RAGSystem("companion.db", model_name=config_data.embedding_model)
-    
+
     logger.info("Loading VAD model...")
     vad_model, vad_utils = torch.hub.load('snakers4/silero-vad', model='silero_vad', force_reload=False)
     vad_processor = AudioStreamProcessor(
@@ -523,27 +533,22 @@ def initialize_models(config_data: CompanionConfig):
     
     logger.info("Warming up voice model...")
     t0 = time.time()
-    model_queue.put(("warm-up.", config_data.voice_speaker_id, [], 500, 0.7, 40))
-
+    model_queue.put((
+        "warm-up.", config_data.voice_speaker_id, [], 500, 0.7, 40,
+    ))
+    
     try:
-        r = model_result_queue.get(timeout=90)  # 90s for slow disks
+        r = model_result_queue.get(timeout=90)  # Prevent infinite hang
         if r is None:
-            logger.error("Warm-up failed: received None")
-            raise RuntimeError("Voice model failed during warm-up")
+            logger.error("Warm-up returned None")
     except queue.Empty:
-        logger.error("Voice model warm-up timed out! Check model thread and TTS model path.")
-        # Optionally: log thread status
-        if 'model_thread' in globals() and model_thread.is_alive():
-            logger.info("Model thread is still alive but not responding.")
-        else:
-            logger.error("Model thread is dead!")
-        raise TimeoutError("Voice model did not respond to warm-up")
+        logger.error("Voice model warm-up timed out after 90s!")
+        raise RuntimeError("Voice model failed to respond during warm-up")
         
     logger.info(f"Voice model ready in {time.time() - t0:.1f}s")
     
     models_loaded = True
     logger.info("All models initialized successfully")
-
 def on_speech_start():
     asyncio.run_coroutine_threadsafe(
         message_queue.put(
