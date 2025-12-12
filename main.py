@@ -79,6 +79,10 @@ from datetime import datetime, timedelta
 import time
 
 
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+import asyncio
+
 
 ##NEW APPROACH
 from pathlib import Path
@@ -2035,12 +2039,6 @@ def migrate_database():
         print(f"Migration error: {e}")
 
 
-# Ensure migrate_database is called during startup (it already is in your code)
-# @app.on_event("startup")
-# async def startup_event():
-#     migrate_database()  # This line should already be present
-#     # ... rest of your startup code ...
-
 
 
 @app.get("/api/debug/models")
@@ -2492,60 +2490,70 @@ async def get_user_conversations(current_user: User = Depends(get_current_user))
 
 
 
-
-@app.on_event("startup")
-async def startup_event():
-    migrate_database()  # Add this line
-    """Initialize all models and resources before the application starts"""
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup code
     logger.info("Starting application initialization...")
     
-    # Run database migrations
-    migrate_database()
-    
-    # Create tables if they don't exist
-    Base.metadata.create_all(bind=engine)
-
-    # Create necessary directories
-    os.makedirs("static", exist_ok=True)
-    os.makedirs("audio/user", exist_ok=True)
-    os.makedirs("audio/ai", exist_ok=True)
-    os.makedirs("embeddings_cache", exist_ok=True)
-    os.makedirs("templates", exist_ok=True)
-
-    # Load core models sequentially
     try:
-        # 1. Load Whisper model first
-        load_whisper_model()
+        # Run database migrations
+        migrate_database()
         
-        # 2. Load other models from saved config if available
-        saved_config = config_manager.load_config()
-        if saved_config:
-            logger.info("Found saved configuration, initializing models...")
-            try:
-                config_data = CompanionConfig(**saved_config)
-                initialize_models(config_data)
-                logger.info("All models initialized from saved configuration")
-            except Exception as e:
-                logger.warning(f"Failed to initialize models from saved config: {e}")
-                logger.info("Application will start with Whisper model only")
-        else:
-            logger.info("No saved configuration found. Application will start with Whisper model only")
+        # Create tables if they don't exist
+        Base.metadata.create_all(bind=engine)
+
+        # Create necessary directories
+        os.makedirs("static", exist_ok=True)
+        os.makedirs("audio/user", exist_ok=True)
+        os.makedirs("audio/ai", exist_ok=True)
+        os.makedirs("embeddings_cache", exist_ok=True)
+        os.makedirs("templates", exist_ok=True)
+
+        # Load core models sequentially
+        try:
+            # 1. Load Whisper model first
+            load_whisper_model()
             
-    except Exception as e:
-        logger.error(f"Failed to load models during startup: {e}")
-        # Don't raise the exception - let the application start with limited functionality
-        logger.warning("Application starting with limited functionality due to model loading errors")
+            # 2. Load other models from saved config if available
+            saved_config = config_manager.load_config()
+            if saved_config:
+                logger.info("Found saved configuration, initializing models...")
+                try:
+                    config_data = CompanionConfig(**saved_config)
+                    initialize_models(config_data)
+                    logger.info("All models initialized from saved configuration")
+                except Exception as e:
+                    logger.warning(f"Failed to initialize models from saved config: {e}")
+                    logger.info("Application will start with Whisper model only")
+            else:
+                logger.info("No saved configuration found. Application will start with Whisper model only")
+                
+        except Exception as e:
+            logger.error(f"Failed to load models during startup: {e}")
+            # Don't raise the exception - let the application start with limited functionality
+            logger.warning("Application starting with limited functionality due to model loading errors")
 
-    # Preload VAD model in background
-    try:
-        torch.hub.load('snakers4/silero-vad', model='silero_vad', force_reload=False)
-    except Exception as e:
-        logger.warning(f"Could not preload VAD model: {e}")
+        # Preload VAD model in background
+        try:
+            torch.hub.load('snakers4/silero-vad', model='silero_vad', force_reload=False)
+        except Exception as e:
+            logger.warning(f"Could not preload VAD model: {e}")
 
-    # Start message queue processing
-    asyncio.create_task(process_message_queue())
-    
-    logger.info("Application startup completed")
+        # Start message queue processing
+        asyncio.create_task(process_message_queue())
+        
+        logger.info("Application startup completed")
+        
+        yield  # This is where the app runs
+        
+    finally:
+        # Shutdown code
+        logger.info("Server shutting down...")
+        model_thread_running.clear()
+
+# Create your FastAPI app with the lifespan context manager
+app = FastAPI(lifespan=lifespan)
+
 
 
 
@@ -2568,11 +2576,6 @@ async def setup_page(request: Request):
 
 
 
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("Server shutting down...")
-    model_thread_running.clear()
 
 
 
