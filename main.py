@@ -2,6 +2,8 @@ import asyncio
 import os
 
 # 1. Set compile-disable environment variables FIRST
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'  # Synchronous CUDA error reporting
+os.environ['TORCH_USE_CUDA_DSA'] = '1'    # Enable device-side assertions
 os.environ['NO_TORCH_COMPILE'] = '1'
 os.environ['TORCH_COMPILE'] = '0'
 os.environ['TORCHDYNAMO_DISABLE'] = '1'
@@ -528,8 +530,18 @@ def initialize_models(config_data: CompanionConfig):
     # Add voice model path if it's in config (adjust field name as needed)
     if hasattr(config_data, 'tts_model_path'):
         logger.info(f"Voice/TTS model path: {os.path.abspath(config_data.tts_model_path)}")
-    # ---
-
+    
+    # --- Verify voice model file exists ---
+    if hasattr(config_data, 'model_path'):
+        model_path = config_data.model_path
+        logger.info(f"Voice model path from config: {model_path}")
+        if not os.path.exists(model_path):
+            logger.error(f"Voice model file NOT FOUND: {model_path}")
+            raise FileNotFoundError(f"Voice model file not found: {model_path}")
+        logger.info(f"Voice model file exists: {os.path.getsize(model_path)} bytes")
+    
+    # --- Load models sequentially ---
+    
     logger.info("Loading LLM...")
     llm = LLMInterface(config_data.llm_path, config_data.max_tokens)
 
@@ -547,27 +559,85 @@ def initialize_models(config_data: CompanionConfig):
     )
     
     load_reference_segments(config_data)
+    
+    # --- Start model thread FIRST ---
+    logger.info("Starting model worker thread...")
     start_model_thread()
+    
+    # --- Wait for model worker to be ready ---
+    time.sleep(2)  # Give model thread time to initialize
     
     logger.info("Warming up voice model...")
     t0 = time.time()
+    
+    # Clear any existing items in queues
+    while not model_queue.empty():
+        try:
+            model_queue.get_nowait()
+        except queue.Empty:
+            break
+    while not model_result_queue.empty():
+        try:
+            model_result_queue.get_nowait()
+        except queue.Empty:
+            break
+    
+    # Send warm-up request
+    warmup_text = "Hello, this is a test."
     model_queue.put((
-        "warm-up.", config_data.voice_speaker_id, [], 500, 0.7, 40,
+        warmup_text, 
+        config_data.voice_speaker_id, 
+        [],  # Empty history for warm-up
+        1000,  # 1 second max
+        0.7,   # temperature
+        40,    # top_k
     ))
     
     try:
-        r = model_result_queue.get(timeout=90)  # Prevent infinite hang
-        if r is None:
-            logger.error("Warm-up returned None")
-    except queue.Empty:
-        logger.error("Voice model warm-up timed out after 90s!")
-        raise RuntimeError("Voice model failed to respond during warm-up")
+        # Wait for first chunk
+        first_result = model_result_queue.get(timeout=30)
         
+        if isinstance(first_result, Exception):
+            logger.error(f"Warm-up failed with exception: {first_result}")
+            raise RuntimeError(f"Voice model warm-up failed: {first_result}")
+        
+        if first_result is not None:
+            # It's an audio chunk
+            logger.info(f"Warm-up successful! First audio chunk size: {first_result.shape}")
+            
+            # Drain the rest of the chunks
+            while True:
+                try:
+                    result = model_result_queue.get(timeout=1.0)
+                    if result is None:
+                        logger.info("Warm-up completed normally")
+                        break
+                    elif isinstance(result, Exception):
+                        logger.error(f"Error during warm-up: {result}")
+                        break
+                except queue.Empty:
+                    logger.warning("Warm-up timed out waiting for completion signal")
+                    break
+        else:
+            logger.error("Warm-up returned None (no audio)")
+            
+    except queue.Empty:
+        logger.error("Voice model warm-up timed out after 30s!")
+        raise RuntimeError("Voice model failed to respond during warm-up")
+    
+    # Clear queues again after warm-up
+    while not model_result_queue.empty():
+        try:
+            model_result_queue.get_nowait()
+        except queue.Empty:
+            break
+    
     logger.info(f"Voice model ready in {time.time() - t0:.1f}s")
     
     models_loaded = True
     logger.info("All models initialized successfully")
 
+    
 
 def on_speech_start():
     asyncio.run_coroutine_threadsafe(
@@ -758,6 +828,10 @@ def process_user_input(user_text, session_id="default"):
 def model_worker(cfg: CompanionConfig):
     global generator, model_thread_running
     logger.info("Hello! Model worker thread started")
+    
+    # Add this flag to track if model is properly loaded
+    model_loaded_successfully = False
+    
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         logger.info(f"Using device: {device}")
@@ -766,50 +840,77 @@ def model_worker(cfg: CompanionConfig):
 
         if generator is None:
             logger.info(f"About to load voice model from: {os.path.abspath(cfg.model_path)}")
-            # Verify path exists
             if not os.path.exists(cfg.model_path):
                 raise FileNotFoundError(f"Model path not found: {cfg.model_path}")
+            
             generator = load_csm_1b_local(cfg.model_path, device)
-
-            # Apply patch to bypass the problematic compiled method
-            if hasattr(generator._audio_tokenizer, '_to_encoder_framerate'):
-                original_method = generator._audio_tokenizer._to_encoder_framerate
-                
-                def patched_to_framerate(emb):
-                    # Force eager execution without compilation
-                    with torch.inference_mode(), torch.autocast(device_type='cpu', enabled=False):
-                        return original_method(emb)
-                
-                generator._audio_tokenizer._to_encoder_framerate = patched_to_framerate
-                print("Patched _to_encoder_framerate to prevent compilation errors")
-
-
             logger.info(f"Voice model successfully loaded on {device}")
+            model_loaded_successfully = True
         else:
             logger.info("Voice model already loaded")
+            model_loaded_successfully = True
 
         while model_thread_running.is_set():
             try:
                 request = model_queue.get(timeout=0.1)
                 if request is None:
                     break
-                # ... rest of generation logic ...
+                    
+                # Add detailed logging for debugging
+                text, speaker_id, segments, max_len_ms, temperature, top_k = request
+                logger.info(f"Processing audio generation request: '{text[:50]}...'")
+                
+                if not model_loaded_successfully or generator is None:
+                    raise RuntimeError("Voice model not properly loaded")
+                
+                # Wrap generation in try-except to catch CUDA errors
+                try:
+                    with torch.no_grad():
+                        with torch.cuda.amp.autocast(enabled=(device=="cuda")):
+                            audio_chunks = generator.stream_text(
+                                text=text,
+                                voice=speaker_id,
+                                history_segments=segments,
+                                max_len_ms=max_len_ms,
+                                temperature=temperature,
+                                top_k=top_k,
+                                chunk_duration_ms=500,
+                                streaming=True,
+                                stream_interval=4
+                            )
+                            
+                            # Process chunks
+                            for chunk in audio_chunks:
+                                if chunk is not None:
+                                    # Ensure chunk is on CPU for queue
+                                    if chunk.is_cuda:
+                                        chunk = chunk.cpu()
+                                    model_result_queue.put(chunk)
+                                    
+                except Exception as gen_error:
+                    logger.error(f"Generation error: {gen_error}")
+                    import traceback
+                    logger.error(f"Traceback: {traceback.format_exc()}")
+                    # Put the error in the result queue so the main thread knows
+                    model_result_queue.put(Exception(f"Generation failed: {str(gen_error)}"))
+                    
+                # Signal completion
                 model_result_queue.put(None)
+                
             except queue.Empty:
                 continue
             except Exception as e:
+                logger.error(f"Error in model worker loop: {e}")
                 import traceback
-                logger.error(f"Error during generation: {e}\n{traceback.format_exc()}")
+                logger.error(traceback.format_exc())
                 model_result_queue.put(Exception(str(e)))
 
     except Exception as e:
         import traceback
-        logger.critical(f"CRITICAL: model_worker failed during model loading: {e}\n{traceback.format_exc()}")
-        # Signal failure to main thread
-        try:
-            model_result_queue.put(None)  # or put an exception
-        except:
-            pass
+        logger.critical(f"CRITICAL: model_worker failed: {e}\n{traceback.format_exc()}")
+        model_result_queue.put(Exception(f"Model worker crashed: {str(e)}"))
+
+
 
 def start_model_thread():
     global model_thread, model_thread_running
@@ -971,6 +1072,7 @@ def audio_generation_thread(text, output_file):
         estimated_seconds = len(words) / words_per_second
         max_audio_length_ms = int(estimated_seconds * 1000)
         
+        logger.info(f"Putting request into model_queue for text: {text[:50]}...")
         model_queue.put((
             text_lower,
             config.voice_speaker_id,
@@ -979,6 +1081,7 @@ def audio_generation_thread(text, output_file):
             0.8,
             50
         ))
+        logger.info("Request successfully queued for audio generation.")
         
         generation_start = time.time()
         chunk_counter = 0
@@ -1486,11 +1589,7 @@ def process_user_input_direct(user_text: str, session_id: str, websocket: WebSoc
 
 
 
-
 def audio_generation_thread_direct(text, output_file, session_id, websocket, user_id=None):
-    """
-    Generate audio and send chunks directly to WebSocket with user context
-    """
     global current_generation_id
     current_generation_id += 1
     this_id = current_generation_id
@@ -1519,6 +1618,8 @@ def audio_generation_thread_direct(text, output_file, session_id, websocket, use
         estimated_seconds = len(words) / words_per_second
         max_audio_length_ms = int(estimated_seconds * 1000)
         
+        logger.info(f"Sending to model queue: '{text_lower[:50]}...', max_len_ms: {max_audio_length_ms}")
+        
         # Send to model queue
         model_queue.put((
             text_lower,
@@ -1531,16 +1632,23 @@ def audio_generation_thread_direct(text, output_file, session_id, websocket, use
         
         generation_start = time.time()
         chunk_counter = 0
+        received_audio = False
         
         while True:
             try:
-                result = model_result_queue.get(timeout=1.0)
-                if result is None:
-                    logger.info(f"Audio generation {this_id} - complete")
-                    break
+                # Increased timeout to 5 seconds
+                result = model_result_queue.get(timeout=5.0)
+                
                 if isinstance(result, Exception):
-                    logger.error(f"Audio generation {this_id} - error: {result}")
+                    logger.error(f"Audio generation {this_id} - received error: {result}")
                     raise result
+                
+                if result is None:
+                    if not received_audio:
+                        logger.error(f"Audio generation {this_id} - completed without any audio chunks!")
+                        raise RuntimeError("No audio generated - model may have failed")
+                    logger.info(f"Audio generation {this_id} - complete, generated {chunk_counter} chunks")
+                    break
                 
                 if chunk_counter == 0:
                     first_chunk_time = time.time() - generation_start
@@ -1559,15 +1667,21 @@ def audio_generation_thread_direct(text, output_file, session_id, websocket, use
                     )
                 
                 chunk_counter += 1
-                audio_chunk = result
-                chunk_array = audio_chunk.cpu().numpy().astype(np.float32)
+                received_audio = True
                 
-                # Send audio chunk directly to WebSocket
+                # Convert to numpy and send
+                audio_chunk = result
+                if audio_chunk.is_cuda:
+                    audio_chunk = audio_chunk.cpu()
+                
+                chunk_array = audio_chunk.numpy().astype(np.float32)
+                
+                # Send audio chunk
                 asyncio.run_coroutine_threadsafe(
                     websocket.send_json({
                         "type": "audio_chunk",
                         "audio": chunk_array.tolist(),
-                        "sample_rate": generator.sample_rate,
+                        "sample_rate": generator.sample_rate if generator else 24000,
                         "gen_id": this_id,
                         "chunk_num": chunk_counter,
                         "session_id": session_id,
@@ -1576,28 +1690,47 @@ def audio_generation_thread_direct(text, output_file, session_id, websocket, use
                     loop
                 )
                 
+                logger.info(f"Audio generation {this_id} - sent chunk {chunk_counter}, size: {len(chunk_array)}")
+                
             except queue.Empty:
-                continue
+                logger.warning(f"Audio generation {this_id} - timeout waiting for audio chunk")
+                break
             except Exception as e:
                 logger.error(f"Audio generation {this_id} - error: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
                 break
         
-        # Send completion status
-        asyncio.run_coroutine_threadsafe(
-            websocket.send_json({
-                "type": "audio_status",
-                "status": "complete",
-                "gen_id": this_id,
-                "session_id": session_id,
-                "user_id": user_id
-            }),
-            loop
-        )
-        
-        logger.info(f"Audio generation {this_id} completed successfully for user_id: {user_id}")
+        # Send appropriate status
+        if received_audio and chunk_counter > 0:
+            logger.info(f"Audio generation {this_id} completed successfully with {chunk_counter} chunks")
+            asyncio.run_coroutine_threadsafe(
+                websocket.send_json({
+                    "type": "audio_status",
+                    "status": "complete",
+                    "gen_id": this_id,
+                    "session_id": session_id,
+                    "user_id": user_id,
+                    "chunks_generated": chunk_counter
+                }),
+                loop
+            )
+        else:
+            logger.error(f"Audio generation {this_id} failed - no audio produced")
+            asyncio.run_coroutine_threadsafe(
+                websocket.send_json({
+                    "type": "error",
+                    "message": "Audio generation failed - no audio produced",
+                    "session_id": session_id,
+                    "user_id": user_id
+                }),
+                loop
+            )
         
     except Exception as e:
         logger.error(f"Error in audio_generation_thread_direct: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         asyncio.run_coroutine_threadsafe(
             websocket.send_json({
                 "type": "error",
@@ -1607,8 +1740,6 @@ def audio_generation_thread_direct(text, output_file, session_id, websocket, use
             }),
             loop
         )
-
-
 
 
 
@@ -2035,11 +2166,43 @@ def migrate_database():
         print(f"Migration error: {e}")
 
 
-# Ensure migrate_database is called during startup (it already is in your code)
-# @app.on_event("startup")
-# async def startup_event():
-#     migrate_database()  # This line should already be present
-#     # ... rest of your startup code ...
+
+@app.post("/test-audio")
+async def test_audio_generation(data: dict):
+    """Test endpoint to verify audio generation works"""
+    text = data.get("text", "Hello, this is a test.")
+    
+    try:
+        # Create a test WebSocket-like object to capture output
+        class MockWebSocket:
+            def __init__(self):
+                self.messages = []
+            
+            async def send_json(self, message):
+                self.messages.append(message)
+                logger.info(f"Mock WS: {message.get('type', 'unknown')}")
+        
+        mock_ws = MockWebSocket()
+        
+        # Test audio generation
+        output_file = f"audio/test/test_{int(time.time())}.wav"
+        
+        # Run in thread
+        threading.Thread(
+            target=audio_generation_thread_direct,
+            args=(text, output_file, "test_session", mock_ws, 1),
+            daemon=True
+        ).start()
+        
+        return {
+            "status": "started",
+            "text": text,
+            "test_file": output_file
+        }
+        
+    except Exception as e:
+        logger.error(f"Test audio generation failed: {e}")
+        return {"status": "error", "message": str(e)}
 
 
 
@@ -2511,6 +2674,14 @@ async def startup_event():
     os.makedirs("audio/ai", exist_ok=True)
     os.makedirs("embeddings_cache", exist_ok=True)
     os.makedirs("templates", exist_ok=True)
+    
+    # Add voice model check
+    if config and hasattr(config, 'model_path'):
+        logger.info(f"Voice model path: {config.model_path}")
+        if os.path.exists(config.model_path):
+            logger.info(f"Voice model file exists: {os.path.getsize(config.model_path)} bytes")
+        else:
+            logger.error(f"Voice model file NOT FOUND: {config.model_path}")
 
     # Load core models sequentially
     try:
