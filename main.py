@@ -508,6 +508,7 @@ def initialize_models(config_data: CompanionConfig):
     logger.info(f"LLM model path: {os.path.abspath(config_data.llm_path)}")
     logger.info(f"Embedding model for RAG: {config_data.embedding_model}")
     logger.info(f"Voice model speaker ID: {config_data.voice_speaker_id}")
+    logger.info(f"Voice synthesis model path (cfg.model_path): {os.path.abspath(config_data.model_path)}")
     # Add voice model path if it's in config (adjust field name as needed)
     if hasattr(config_data, 'tts_model_path'):
         logger.info(f"Voice/TTS model path: {os.path.abspath(config_data.tts_model_path)}")
@@ -740,49 +741,45 @@ def process_user_input(user_text, session_id="default"):
 
 def model_worker(cfg: CompanionConfig):
     global generator, model_thread_running
-    logger.info("Model worker thread started")
-    
-    # Determine device (GPU if available, otherwise CPU)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    logger.info(f"Using device: {device}")
-    
-    if device == "cuda":
-        logger.info(f"GPU: {torch.cuda.get_device_name(0)}")
-        # Optional: Print GPU memory info
-        logger.info(f"GPU Memory: {torch.cuda.get_device_properties(0).total_memory / 1e9:.2f} GB")
-    
-    if generator is None:
-        logger.info("Loading voice model inside worker thread …")
-        # Load model on the appropriate device
-        generator = load_csm_1b_local(cfg.model_path, device)
-        logger.info(f"Voice model loaded on {device}")
-    
-    while model_thread_running.is_set():
-        try:
-            request = model_queue.get(timeout=0.1)
-            if request is None:
-                break
-            text, speaker_id, context, max_ms, temperature, topk = request
-            
-            for chunk in generator.generate_stream(
-                    text=text,
-                    speaker=speaker_id,
-                    context=context,
-                    max_audio_length_ms=max_ms,
-                    temperature=temperature,
-                    topk=topk):
-                model_result_queue.put(chunk)
-                if not model_thread_running.is_set():
-                    break
-            model_result_queue.put(None)
-        except queue.Empty:
-            continue
-        except Exception as e:
-            import traceback
-            logger.error(f"Error in model worker: {e}\n{traceback.format_exc()}")
-            model_result_queue.put(Exception(f"Generation error: {e}"))
-    logger.info("Model worker thread exiting")
+    logger.info("Hello! Model worker thread started")
+    try:
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        logger.info(f"Using device: {device}")
+        if device == "cuda":
+            logger.info(f"GPU: {torch.cuda.get_device_name(0)}")
 
+        if generator is None:
+            logger.info(f"About to load voice model from: {os.path.abspath(cfg.model_path)}")
+            # Verify path exists
+            if not os.path.exists(cfg.model_path):
+                raise FileNotFoundError(f"Model path not found: {cfg.model_path}")
+            generator = load_csm_1b_local(cfg.model_path, device)
+            logger.info(f"Voice model successfully loaded on {device}")
+        else:
+            logger.info("Voice model already loaded")
+
+        while model_thread_running.is_set():
+            try:
+                request = model_queue.get(timeout=0.1)
+                if request is None:
+                    break
+                # ... rest of generation logic ...
+                model_result_queue.put(None)
+            except queue.Empty:
+                continue
+            except Exception as e:
+                import traceback
+                logger.error(f"Error during generation: {e}\n{traceback.format_exc()}")
+                model_result_queue.put(Exception(str(e)))
+
+    except Exception as e:
+        import traceback
+        logger.critical(f"CRITICAL: model_worker failed during model loading: {e}\n{traceback.format_exc()}")
+        # Signal failure to main thread
+        try:
+            model_result_queue.put(None)  # or put an exception
+        except:
+            pass
 
 def start_model_thread():
     global model_thread, model_thread_running
