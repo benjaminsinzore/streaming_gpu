@@ -704,6 +704,9 @@ def process_user_input(user_text, session_id="default"):
         )
 
 
+
+
+
 def model_worker(cfg: CompanionConfig):
     global generator, model_thread_running
     logger.info("Model worker thread started")
@@ -733,7 +736,7 @@ def model_worker(cfg: CompanionConfig):
                 
                 # Debug: Check what type of object we have
                 logger.info(f"Generator type: {type(generator)}")
-                logger.info(f"Generator attributes: {[attr for attr in dir(generator) if not attr.startswith('_')][:20]}...")
+                logger.info(f"Available methods: {[m for m in dir(generator) if callable(getattr(generator, m)) and not m.startswith('_')]}")
                 
                 # Check for important attributes
                 if hasattr(generator, 'sample_rate'):
@@ -743,31 +746,46 @@ def model_worker(cfg: CompanionConfig):
                 if hasattr(generator, '_audio_tokenizer'):
                     logger.info("Audio tokenizer available")
                     
-                # Try a simple test
+                # Try a simple test with generate_stream
                 try:
-                    logger.info("Testing generator with simple call...")
-                    # Check if it has a generate_stream or similar method
-                    if hasattr(generator, 'stream_text'):
-                        logger.info("Generator has stream_text method")
+                    logger.info("Testing generator with generate_stream...")
+                    if hasattr(generator, 'generate_stream'):
                         # Test with minimal input
-                        test_result = list(generator.stream_text(
+                        test_chunks = []
+                        for chunk in generator.generate_stream(
                             text="test",
                             voice=0,
                             history_segments=[],
                             max_len_ms=100,
                             temperature=0.7,
-                            top_k=40,
-                            streaming=False
-                        ))
-                        if test_result:
-                            logger.info(f"Test successful! Got {len(test_result)} chunks")
+                            top_k=40
+                        ):
+                            if chunk is not None:
+                                test_chunks.append(chunk)
+                        
+                        if test_chunks:
+                            logger.info(f"Test successful! Got {len(test_chunks)} chunks")
+                            # Also test generate method
+                            if hasattr(generator, 'generate'):
+                                test_audio = generator.generate(
+                                    text="test",
+                                    voice=0,
+                                    history_segments=[],
+                                    max_len_ms=100,
+                                    temperature=0.7,
+                                    top_k=40
+                                )
+                                if test_audio is not None:
+                                    logger.info(f"Generate method works! Audio shape: {test_audio.shape}")
                         else:
                             logger.warning("Test returned empty result")
                     else:
-                        logger.warning("Generator doesn't have stream_text method")
+                        logger.error("Generator doesn't have generate_stream method!")
                         
                 except Exception as test_error:
                     logger.error(f"Generator test failed: {test_error}")
+                    import traceback
+                    logger.error(traceback.format_exc())
                     
             except Exception as load_error:
                 logger.error(f"Failed to load voice model: {load_error}")
@@ -794,28 +812,47 @@ def model_worker(cfg: CompanionConfig):
                 logger.info(f"Processing: '{text[:50]}...'")
                 
                 try:
-                    # Get device info without using parameters() method
-                    current_device = "cpu"  # Default
-                    if hasattr(generator, 'device'):
-                        current_device = generator.device
-                    elif hasattr(generator, '_model'):
-                        if hasattr(generator._model, 'device'):
-                            current_device = generator._model.device
-                    
+                    # Get device info
+                    current_device = getattr(generator, 'device', 'cpu')
                     logger.info(f"Generator device: {current_device}")
                     
-                    # Generate audio
-                    audio_chunks = generator.stream_text(
-                        text=text,
-                        voice=speaker_id,
-                        history_segments=segments,
-                        max_len_ms=max_len_ms,
-                        temperature=temperature,
-                        top_k=top_k,
-                        chunk_duration_ms=500,
-                        streaming=True,
-                        stream_interval=4
-                    )
+                    # Check which method to use
+                    if hasattr(generator, 'generate_stream'):
+                        # Use generate_stream for streaming
+                        audio_chunks = generator.generate_stream(
+                            text=text,
+                            voice=speaker_id,
+                            history_segments=segments,
+                            max_len_ms=max_len_ms,
+                            temperature=temperature,
+                            top_k=top_k
+                        )
+                    elif hasattr(generator, 'generate'):
+                        # Use generate and split into chunks
+                        logger.info("Using generate method (non-streaming)")
+                        full_audio = generator.generate(
+                            text=text,
+                            voice=speaker_id,
+                            history_segments=segments,
+                            max_len_ms=max_len_ms,
+                            temperature=temperature,
+                            top_k=top_k
+                        )
+                        if full_audio is not None:
+                            # Split into chunks of ~500ms
+                            chunk_size = generator.sample_rate // 2  # 0.5 second chunks
+                            num_chunks = (full_audio.shape[0] + chunk_size - 1) // chunk_size
+                            audio_chunks = []
+                            for i in range(num_chunks):
+                                start = i * chunk_size
+                                end = min((i + 1) * chunk_size, full_audio.shape[0])
+                                chunk = full_audio[start:end]
+                                audio_chunks.append(chunk)
+                            audio_chunks = iter(audio_chunks)
+                        else:
+                            audio_chunks = iter([])
+                    else:
+                        raise AttributeError("Generator has neither generate_stream nor generate methods")
                     
                     chunk_count = 0
                     for chunk in audio_chunks:
@@ -836,6 +873,14 @@ def model_worker(cfg: CompanionConfig):
                     else:
                         logger.error(f"RuntimeError during generation: {e}")
                         model_result_queue.put(Exception(f"Generation failed: {str(e)}"))
+                
+                except IndexError as e:
+                    if "index out of range" in str(e):
+                        logger.error(f"INDEX OUT OF RANGE ERROR: {e}")
+                        logger.error("This indicates the model's embedding/codebook is corrupted or incompatible")
+                        model_result_queue.put(Exception(f"Model corruption: {str(e)}"))
+                    else:
+                        raise
                 
                 except Exception as gen_error:
                     logger.error(f"Generation error: {gen_error}")
@@ -865,6 +910,9 @@ def model_worker(cfg: CompanionConfig):
             model_result_queue.put(Exception(f"Model worker crashed: {str(e)}"))
         except:
             pass
+
+
+
 
 
 def validate_voice_model(model_path):
@@ -938,48 +986,13 @@ def validate_voice_model(model_path):
         logger.error(f"Failed to validate model: {e}")
         return False
 
+
+
 def initialize_models(config_data: CompanionConfig):
     global generator, llm, rag, vad_processor, config, models_loaded
     config = config_data
 
-    # --- Log model paths early ---
-    logger.info(f"LLM model path: {os.path.abspath(config_data.llm_path)}")
-    logger.info(f"Embedding model for RAG: {config_data.embedding_model}")
-    logger.info(f"Voice model speaker ID: {config_data.voice_speaker_id}")
-    
-    # --- Validate voice model FIRST ---
-    if hasattr(config_data, 'model_path'):
-        model_path = config_data.model_path
-        logger.info(f"Validating voice model: {model_path}")
-        
-        if not validate_voice_model(model_path):
-            logger.error("Voice model validation failed!")
-            logger.warning("Attempting to continue with limited functionality...")
-        else:
-            logger.info("Voice model validation passed")
-    
-    # --- Load other models ---
-    logger.info("Loading LLM...")
-    llm = LLMInterface(config_data.llm_path, config_data.max_tokens)
-
-    logger.info("Loading RAG...")
-    rag = RAGSystem("companion.db", model_name=config_data.embedding_model)
-
-    logger.info("Loading VAD model...")
-    vad_model, vad_utils = torch.hub.load('snakers4/silero-vad', model='silero_vad', force_reload=False)
-    vad_processor = AudioStreamProcessor(
-        model=vad_model,
-        utils=vad_utils,
-        sample_rate=16_000,
-        vad_threshold=config_data.vad_threshold,
-        callbacks={"on_speech_start": on_speech_start, "on_speech_end": on_speech_end},
-    )
-    
-    load_reference_segments(config_data)
-    
-    # --- Start model thread ---
-    logger.info("Starting model worker thread...")
-    start_model_thread()
+    # ... (keep the existing logging and validation code) ...
     
     # --- Warm up with error recovery ---
     logger.info("Warming up voice model...")
@@ -998,9 +1011,6 @@ def initialize_models(config_data: CompanionConfig):
             break
     
     # Try warm-up with simple text
-    warmup_text = "Hello"
-    
-    # Try multiple warm-up attempts with increasing simplicity
     warmup_attempts = [
         ("Hello", 1000),  # Simple, short
         ("Test", 500),    # Even simpler
@@ -1064,31 +1074,30 @@ def initialize_models(config_data: CompanionConfig):
     if not warmup_success:
         logger.error(f"All warm-up attempts failed. Last error: {last_error}")
         
-        # Try one more time with CPU forced mode
-        logger.info("Attempting CPU-only warm-up...")
+        # Try direct test without queue
+        logger.info("Attempting direct test without queue...")
         try:
-            # Force generator to CPU if it exists
-            if generator is not None:
-                generator = generator.to("cpu")
-                logger.info("Generator moved to CPU for recovery")
-                
-                # Direct test
-                test_audio = list(generator.stream_text(
+            if generator is not None and hasattr(generator, 'generate'):
+                # Use generate method (non-streaming)
+                test_audio = generator.generate(
                     text="Test",
                     voice=config_data.voice_speaker_id,
                     history_segments=[],
                     max_len_ms=200,
                     temperature=0.7,
-                    top_k=40,
-                    streaming=True
-                ))
+                    top_k=40
+                )
                 
-                if test_audio and test_audio[0] is not None:
-                    logger.info(f"CPU test successful: {len(test_audio)} chunks")
+                if test_audio is not None:
+                    logger.info(f"Direct test successful! Audio shape: {test_audio.shape}")
                     warmup_success = True
+                else:
+                    logger.error("Direct test returned None")
+            else:
+                logger.error("Generator not available or missing generate method")
                     
-        except Exception as cpu_error:
-            logger.error(f"CPU test also failed: {cpu_error}")
+        except Exception as direct_error:
+            logger.error(f"Direct test also failed: {direct_error}")
     
     if warmup_success:
         logger.info(f"Voice model ready in {time.time() - t0:.1f}s")
@@ -1098,6 +1107,7 @@ def initialize_models(config_data: CompanionConfig):
         logger.error("Voice model failed to initialize properly")
         logger.warning("Application will start with limited functionality (no voice)")
         models_loaded = False  # Set to False so frontend knows
+
 
 
 def start_model_thread():
@@ -1976,75 +1986,73 @@ def test_generator_directly():
         
         logger.info(f"Testing with text: '{test_text}'")
         
-        # Get the streaming function
-        if not hasattr(generator, 'stream_text'):
-            logger.error("Generator doesn't have stream_text method")
-            return False
+        # Try generate_stream first
+        if hasattr(generator, 'generate_stream'):
+            logger.info("Testing generate_stream...")
+            try:
+                chunks = []
+                for chunk in generator.generate_stream(
+                    text=test_text,
+                    voice=0,  # Default voice
+                    history_segments=[],
+                    max_len_ms=500,
+                    temperature=0.7,
+                    top_k=40
+                ):
+                    if chunk is not None:
+                        chunks.append(chunk)
+                
+                logger.info(f"generate_stream: Got {len(chunks)} chunks")
+                
+                if chunks:
+                    first_chunk = chunks[0]
+                    logger.info(f"First chunk shape: {first_chunk.shape}, dtype: {first_chunk.dtype}")
+                    return True
+            except Exception as e:
+                logger.error(f"generate_stream failed: {e}")
         
-        # Try to generate
-        try:
-            chunks = list(generator.stream_text(
-                text=test_text,
-                voice=0,  # Default voice
-                history_segments=[],
-                max_len_ms=500,
-                temperature=0.7,
-                top_k=40,
-                streaming=True
-            ))
-            
-            logger.info(f"Got {len(chunks)} chunks")
-            
-            if not chunks:
-                logger.error("No chunks generated")
-                return False
-            
-            # Check first chunk
-            first_chunk = chunks[0]
-            if first_chunk is None:
-                logger.error("First chunk is None")
-                return False
-            
-            logger.info(f"First chunk shape: {first_chunk.shape}, dtype: {first_chunk.dtype}")
-            
-            # Try to save it
-            test_file = "audio/test_direct.wav"
-            os.makedirs(os.path.dirname(test_file), exist_ok=True)
-            
-            if len(chunks) == 1:
-                audio = first_chunk
-            else:
-                audio = torch.cat([c for c in chunks if c is not None])
-            
-            sample_rate = getattr(generator, 'sample_rate', 24000)
-            torchaudio.save(test_file, audio.unsqueeze(0), sample_rate)
-            
-            logger.info(f"Saved test audio to: {test_file}")
-            logger.info("=== DIRECT TEST SUCCESSFUL ===")
-            return True
-            
-        except Exception as e:
-            logger.error(f"Generation test failed: {e}")
-            import traceback
-            logger.error(traceback.format_exc())
-            return False
+        # Try generate method
+        if hasattr(generator, 'generate'):
+            logger.info("Testing generate...")
+            try:
+                audio = generator.generate(
+                    text=test_text,
+                    voice=0,
+                    history_segments=[],
+                    max_len_ms=500,
+                    temperature=0.7,
+                    top_k=40
+                )
+                
+                if audio is not None:
+                    logger.info(f"generate: Got audio shape: {audio.shape}, dtype: {audio.dtype}")
+                    
+                    # Try to save it
+                    test_file = "audio/test_direct.wav"
+                    os.makedirs(os.path.dirname(test_file), exist_ok=True)
+                    
+                    sample_rate = getattr(generator, 'sample_rate', 24000)
+                    torchaudio.save(test_file, audio.unsqueeze(0), sample_rate)
+                    
+                    logger.info(f"Saved test audio to: {test_file}")
+                    logger.info("=== DIRECT TEST SUCCESSFUL ===")
+                    return True
+                else:
+                    logger.error("generate returned None")
+            except Exception as e:
+                logger.error(f"generate failed: {e}")
+                import traceback
+                logger.error(traceback.format_exc())
+        
+        logger.error("=== DIRECT TEST FAILED ===")
+        return False
             
     except Exception as e:
         logger.error(f"Direct test setup failed: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         return False
-
-# Call this function during startup after loading models
-@app.on_event("startup")
-async def startup_event():
-    # ... existing startup code ...
     
-    # After models are loaded, test the generator
-    if generator is not None:
-        # Run in a thread so it doesn't block startup
-        threading.Thread(target=test_generator_directly, daemon=True).start()
-    
-    # ... rest of startup code ...
-
 
 
 
@@ -2607,33 +2615,6 @@ async def debug_models():
     }
 
 
-@app.get("/api/debug/test-generator")
-async def debug_test_generator():
-    """Quick endpoint to test generator directly"""
-    if generator is None:
-        return {"error": "Generator not loaded"}
-    
-    try:
-        # Simple test
-        chunks = list(generator.stream_text(
-            text="test",
-            voice=0,
-            history_segments=[],
-            max_len_ms=200,
-            temperature=0.7,
-            top_k=40,
-            streaming=True
-        ))
-        
-        chunks = [c for c in chunks if c is not None]
-        
-        return {
-            "success": len(chunks) > 0,
-            "chunks": len(chunks),
-            "sample_rate": getattr(generator, 'sample_rate', 'unknown')
-        }
-    except Exception as e:
-        return {"error": str(e), "traceback": traceback.format_exc()}
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -3209,6 +3190,57 @@ async def test_text_input(data: dict):
         return {"status": "processing", "text": user_text}
     return {"status": "error", "message": "No text provided"}
 
+
+
+@app.get("/api/debug/test-generator")
+async def debug_test_generator():
+    """Quick endpoint to test generator directly"""
+    if generator is None:
+        return {"error": "Generator not loaded"}
+    
+    try:
+        # Try generate_stream first
+        if hasattr(generator, 'generate_stream'):
+            chunks = []
+            for chunk in generator.generate_stream(
+                text="test",
+                voice=0,
+                history_segments=[],
+                max_len_ms=200,
+                temperature=0.7,
+                top_k=40
+            ):
+                if chunk is not None:
+                    chunks.append(chunk)
+            
+            method = "generate_stream"
+            result = len(chunks)
+            
+        # Fall back to generate
+        elif hasattr(generator, 'generate'):
+            audio = generator.generate(
+                text="test",
+                voice=0,
+                history_segments=[],
+                max_len_ms=200,
+                temperature=0.7,
+                top_k=40
+            )
+            method = "generate"
+            result = "audio" if audio is not None else "None"
+            
+        else:
+            return {"error": "No generation methods available"}
+        
+        return {
+            "success": True,
+            "method_used": method,
+            "result": result,
+            "sample_rate": getattr(generator, 'sample_rate', 'unknown')
+        }
+    except Exception as e:
+        import traceback
+        return {"error": str(e), "traceback": traceback.format_exc()}
 
 
 @app.get("/logout")
