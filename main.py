@@ -523,13 +523,22 @@ def initialize_models(config_data: CompanionConfig):
     
     logger.info("Warming up voice model...")
     t0 = time.time()
-    model_queue.put((
-        "warm-up.", config_data.voice_speaker_id, [], 500, 0.7, 40,
-    ))
-    while True:
-        r = model_result_queue.get()
+    model_queue.put(("warm-up.", config_data.voice_speaker_id, [], 500, 0.7, 40))
+
+    try:
+        r = model_result_queue.get(timeout=90)  # 90s for slow disks
         if r is None:
-            break
+            logger.error("Warm-up failed: received None")
+            raise RuntimeError("Voice model failed during warm-up")
+    except queue.Empty:
+        logger.error("Voice model warm-up timed out! Check model thread and TTS model path.")
+        # Optionally: log thread status
+        if 'model_thread' in globals() and model_thread.is_alive():
+            logger.info("Model thread is still alive but not responding.")
+        else:
+            logger.error("Model thread is dead!")
+        raise TimeoutError("Voice model did not respond to warm-up")
+        
     logger.info(f"Voice model ready in {time.time() - t0:.1f}s")
     
     models_loaded = True
