@@ -470,7 +470,7 @@ def load_whisper_model():
         model=whisper_model,
         tokenizer=processor.tokenizer,
         feature_extractor=processor.feature_extractor,
-        torch_dtype=dtype,
+        dtype=dtype,
         device=device,  # Use GPU if available
     )
     
