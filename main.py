@@ -770,6 +770,20 @@ def model_worker(cfg: CompanionConfig):
             if not os.path.exists(cfg.model_path):
                 raise FileNotFoundError(f"Model path not found: {cfg.model_path}")
             generator = load_csm_1b_local(cfg.model_path, device)
+
+            # Apply patch to bypass the problematic compiled method
+            if hasattr(generator._audio_tokenizer, '_to_encoder_framerate'):
+                original_method = generator._audio_tokenizer._to_encoder_framerate
+                
+                def patched_to_framerate(emb):
+                    # Force eager execution without compilation
+                    with torch.inference_mode(), torch.autocast(device_type='cpu', enabled=False):
+                        return original_method(emb)
+                
+                generator._audio_tokenizer._to_encoder_framerate = patched_to_framerate
+                print("Patched _to_encoder_framerate to prevent compilation errors")
+
+
             logger.info(f"Voice model successfully loaded on {device}")
         else:
             logger.info("Voice model already loaded")
