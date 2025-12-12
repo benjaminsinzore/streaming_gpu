@@ -364,7 +364,12 @@ class AudioStreamWriter:
 def load_csm_1b_local(model_path: str, device: str = "cpu", audio_num_codebooks: int = 32):
     from functools import lru_cache
     from generator import Generator, Model, ModelArgs
+    
+
     print(f"Loading CSM-1B model from local checkpoint '{model_path}'...")
+
+    # Note: This config is unused in from_pretrained if config.json exists.
+    # But we keep it for clarity (optional).
     config = ModelArgs(
         backbone_flavor="llama-1B",
         decoder_flavor="llama-100M",
@@ -372,28 +377,43 @@ def load_csm_1b_local(model_path: str, device: str = "cpu", audio_num_codebooks:
         audio_vocab_size=2051,
         audio_num_codebooks=audio_num_codebooks,
     )
+
     model = Model.from_pretrained(model_path)
     model.eval()
-    dtype = torch.float32  # Use float32 for CPU
+
+    # Use float32 for stability (especially on GPU)
+    dtype = torch.float32
+
+    # Optional: compile for speed (safe in float32)
     try:
         model.backbone = torch.compile(model.backbone, mode='reduce-overhead', fullgraph=True, backend='inductor')
         model.decoder = torch.compile(model.decoder, mode='reduce-overhead', fullgraph=True, backend='inductor')
     except Exception as e:
         print(f"Warning: Torch compilation failed: {e}. Proceeding without compilation.")
+
+    # Move main model to device + float32
     model.to(device=device, dtype=dtype)
+
     print("Model compilation complete. Creating generator...")
     generator = Generator(model)
     generator._stream_buffer_size = 20
     generator._tokenization_cache = {}
-    original_tokenize_text = generator._tokenize_text_segment
 
+    # Cast audio tokenizer to float32 and same device
+    if hasattr(generator, '_audio_tokenizer'):
+        generator._audio_tokenizer = generator._audio_tokenizer.to(device=device, dtype=dtype)
+        print(f"Audio tokenizer moved to {device} with dtype {dtype}")
+
+    # Optional: cache text tokenization
+    original_tokenize_text = generator._tokenize_text_segment
     @lru_cache(maxsize=2048)
     def cached_tokenize_text_segment(text_str, speaker_int):
         return original_tokenize_text(text_str, speaker_int)
-
     generator._tokenize_text_segment = lambda text, speaker: cached_tokenize_text_segment(text, speaker)
+
     warmup_generator(generator)
     return generator
+
 
 def warmup_generator(gen: Generator, warmup_text: str = "Hello, this is a comprehensive warmup text that will exercise the model's generation capabilities.", speaker_id: int = 0):
     print("Starting warmup sequence...")
