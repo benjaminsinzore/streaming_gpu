@@ -447,7 +447,7 @@ def load_whisper_model():
     devIce = "cuda" if torch.cuda.is_available() else "cpu"
     whisper_model = AutoModelForSpeechSeq2Seq.from_pretrained(
         model_id,
-        dtype=torch.float16 if devIce == "cuda" else torch.float32,
+        torch_dtype=torch.float16 if devIce == "cuda" else torch.float32,
         low_cpu_mem_usage=True,
         use_safetensors=True,
         local_files_only=True
@@ -470,7 +470,7 @@ def load_whisper_model():
         model=whisper_model,
         tokenizer=processor.tokenizer,
         feature_extractor=processor.feature_extractor,
-        dtype=dtype,
+        torch_dtype=dtype,
         device=device,  # Use GPU if available
     )
     
@@ -2033,6 +2033,13 @@ def migrate_database():
         conn.close()
     except Exception as e:
         print(f"Migration error: {e}")
+
+
+# Ensure migrate_database is called during startup (it already is in your code)
+# @app.on_event("startup")
+# async def startup_event():
+#     migrate_database()  # This line should already be present
+#     # ... rest of your startup code ...
 
 
 
