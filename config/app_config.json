@@ -1,7 +1,7 @@
 {
   "system_prompt": "You are a friendly AI.",
   "model_path": "./finetuned_model/CSM-MrDragonFox-Elise",
-  "llm_path": "./models/Basqui-R1-4B-v1-GGUF/basqui-4b-instruct.gguf",
+  "llm_path": "./models/tuned/basqui-4b-instruct.gguf",
   "reference_audio_path": "./reference.wav",
   "reference_text": "Hi, how can I help?",
   "reference_audio_path2": "",
