@@ -11,6 +11,9 @@ os.environ['ONEDNN_PRIMITIVE_CACHE_CAPACITY'] = '0'
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 
+os.environ['CUDNN_BENCHMARK'] = '0'
+os.environ['CUDNN_DETERMINISTIC'] = '1'
+
 # 2. Now import PyTorch
 import torch
 import torchaudio
