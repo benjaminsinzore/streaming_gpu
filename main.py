@@ -508,6 +508,7 @@ def initialize_models(config_data: CompanionConfig):
     logger.info(f"LLM model path: {os.path.abspath(config_data.llm_path)}")
     logger.info(f"Embedding model for RAG: {config_data.embedding_model}")
     logger.info(f"Voice model speaker ID: {config_data.voice_speaker_id}")
+    # Add voice model path if it's in config (adjust field name as needed)
     if hasattr(config_data, 'tts_model_path'):
         logger.info(f"Voice/TTS model path: {os.path.abspath(config_data.tts_model_path)}")
     # ---
@@ -529,107 +530,26 @@ def initialize_models(config_data: CompanionConfig):
     )
     
     load_reference_segments(config_data)
-    
-    # **CRITICAL: Let's check what start_model_thread() does**
-    logger.info("Starting model thread...")
     start_model_thread()
     
-    # **Give thread time to initialize**
-    time.sleep(2)
-    
-    # **Debug: Check thread and queue status**
-    logger.info("Debug: Checking thread and queue status...")
-    
-    # Check if queues exist
-    if 'model_queue' not in globals():
-        logger.error("model_queue not found in globals!")
-        raise RuntimeError("Model queue not initialized")
-    
-    if 'model_result_queue' not in globals():
-        logger.error("model_result_queue not found in globals!")
-        raise RuntimeError("Result queue not initialized")
-    
-    logger.info(f"Model queue exists: {model_queue}")
-    logger.info(f"Result queue exists: {model_result_queue}")
-    
-    # **Try a simpler warm-up approach**
-    logger.info("Warming up voice model with debug steps...")
+    logger.info("Warming up voice model...")
     t0 = time.time()
-    
-    # **Step 1: Test if queue is working**
-    logger.info("Step 1: Testing queue communication...")
-    test_text = "test"
+    model_queue.put((
+        "warm-up.", config_data.voice_speaker_id, [], 500, 0.7, 40,
+    ))
     
     try:
-        # Try to put a task in the queue
-        logger.info(f"Putting test task in queue: '{test_text}'")
-        model_queue.put((
-            test_text, 
-            config_data.voice_speaker_id, 
-            [], 
-            100,  # Shorter length for test
-            0.7, 
-            40,
-        ), timeout=5)
-        logger.info("Test task queued successfully")
+        r = model_result_queue.get(timeout=90)  # Prevent infinite hang
+        if r is None:
+            logger.error("Warm-up returned None")
+    except queue.Empty:
+        logger.error("Voice model warm-up timed out after 90s!")
+        raise RuntimeError("Voice model failed to respond during warm-up")
         
-        # **Step 2: Wait for response with better logging**
-        logger.info("Step 2: Waiting for response...")
-        
-        max_wait = 30  # Shorter timeout for testing
-        poll_interval = 1
-        
-        for attempt in range(max_wait):
-            try:
-                # Try to get result with short timeout
-                r = model_result_queue.get(timeout=poll_interval)
-                logger.info(f"Got response from voice model: {type(r)}")
-                
-                if r is None:
-                    logger.warning("Received None response")
-                elif isinstance(r, tuple):
-                    logger.info(f"Response tuple length: {len(r)}")
-                    if len(r) > 0:
-                        logger.info(f"First element type: {type(r[0])}")
-                        if hasattr(r[0], 'shape'):
-                            logger.info(f"Audio shape: {r[0].shape}")
-                else:
-                    logger.info(f"Response type: {type(r)}")
-                    logger.info(f"Response: {r}")
-                    
-                # Success!
-                logger.info(f"Voice model ready in {time.time() - t0:.1f}s")
-                break
-                
-            except queue.Empty:
-                logger.debug(f"Waiting... ({attempt + 1}/{max_wait} seconds)")
-                if attempt % 10 == 0:  # Log every 10 seconds
-                    logger.info(f"Still waiting for voice model response... ({attempt + 1}s)")
-                continue
-                
-        else:
-            # We exited the loop without breaking (timed out)
-            logger.error(f"Voice model warm-up timed out after {max_wait} seconds!")
-            
-            # **Optional: Continue without voice model warm-up**
-            # Uncomment if you want to proceed anyway
-            # logger.warning("Continuing without voice model warm-up - model may work anyway")
-            # return
-            
-            raise RuntimeError("Voice model failed to respond during warm-up")
-            
-    except queue.Full:
-        logger.error("Model queue is FULL! The voice thread is not processing tasks.")
-        logger.error("This means the thread might be dead or stuck")
-        raise RuntimeError("Voice model thread is not processing tasks")
-        
-    except Exception as e:
-        logger.error(f"Error during warm-up: {e}", exc_info=True)
-        raise
+    logger.info(f"Voice model ready in {time.time() - t0:.1f}s")
     
     models_loaded = True
     logger.info("All models initialized successfully")
-
 
 
 def on_speech_start():
@@ -862,6 +782,7 @@ def model_worker(cfg: CompanionConfig):
             logger.error(f"Error in model worker: {e}\n{traceback.format_exc()}")
             model_result_queue.put(Exception(f"Generation error: {e}"))
     logger.info("Model worker thread exiting")
+
 
 def start_model_thread():
     global model_thread, model_thread_running
