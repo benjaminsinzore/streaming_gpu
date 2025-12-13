@@ -815,16 +815,26 @@ def model_worker(cfg: CompanionConfig):
         except:
             pass
 
+
+
+
+
 def start_model_thread():
     global model_thread, model_thread_running
+
     if model_thread is not None and model_thread.is_alive():
-        return
+        return                        
+
     model_thread_running.set()
-    model_thread = threading.Thread(target=model_worker, args=(config,), daemon=True, name="model_worker")
+    model_thread = threading.Thread(target=model_worker,
+                                    args=(config,),
+                                    daemon=True,
+                                    name="model_worker")
     model_thread.start()
     logger.info("Started dedicated model worker thread")
 
-# ... (rest of your functions remain the same - send_to_all_clients, save_audio_and_trim, add_segment, etc.)
+
+
 
 saved_audio_paths = {
     "default": {
