@@ -41,7 +41,7 @@ async def serve_audio_page():
     <body>
         <h1>🔊 Cloned Voice</h1>
         <audio controls autoplay>
-            <source src="/static/cloned_voice.wav" type="audio/wav">
+            <source src="/static/warmup_final.wav" type="audio/wav">
             Your browser does not support the audio element.
         </audio>
         <p><em>Note: If you don't hear sound, check browser autoplay policy or click play manually.</em></p>
@@ -49,3 +49,8 @@ async def serve_audio_page():
     </html>
     """
     return HTMLResponse(content=html_content)
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main_:app", host="0.0.0.0", port=8000, reload=False)
