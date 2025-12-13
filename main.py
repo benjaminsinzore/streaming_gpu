@@ -563,14 +563,10 @@ def initialize_models(config_data: CompanionConfig):
         "warm-up.", config_data.voice_speaker_id, [], 500, 0.7, 40,
     ))
     
-    try:
-        r = model_result_queue.get(timeout=90)  # Prevent infinite hang
+    while True:
+        r = model_result_queue.get()
         if r is None:
-            logger.error("Warm-up returned None")
-    except queue.Empty:
-        logger.error("Voice model warm-up timed out after 90s!")
-        raise RuntimeError("Voice model failed to respond during warm-up")
-        
+            break
     logger.info(f"Voice model ready in {time.time() - t0:.1f}s")
     
     models_loaded = True
