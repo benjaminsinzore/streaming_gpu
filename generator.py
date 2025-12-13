@@ -366,7 +366,7 @@ def load_csm_1b_local(model_path: str, device: str = "cpu", audio_num_codebooks:
     from generator import Generator, Model
     
 
-    print(f"Loading CSM-1B model from local checkpoint '{model_path}'...")
+    print(f"Loading CSM-1B model from local checkpoint '{model_path}'...Hello!")
 
     model = Model.from_pretrained(model_path)
     model.eval()
