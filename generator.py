@@ -363,20 +363,10 @@ class AudioStreamWriter:
 
 def load_csm_1b_local(model_path: str, device: str = "cpu", audio_num_codebooks: int = 32):
     from functools import lru_cache
-    from generator import Generator, Model, ModelArgs
+    from generator import Generator, Model
     
 
     print(f"Loading CSM-1B model from local checkpoint '{model_path}'...")
-
-    # Note: This config is unused in from_pretrained if config.json exists.
-    # But we keep it for clarity (optional).
-    config = ModelArgs(
-        backbone_flavor="llama-1B",
-        decoder_flavor="llama-100M",
-        text_vocab_size=128256,
-        audio_vocab_size=2051,
-        audio_num_codebooks=audio_num_codebooks,
-    )
 
     model = Model.from_pretrained(model_path)
     model.eval()

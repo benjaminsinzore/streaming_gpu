@@ -924,11 +924,6 @@ def audio_generation_thread(text, output_file):
     current_generation_id += 1
     this_id = current_generation_id
     interrupt_flag.clear()
-
-    memory_info = torch.cuda.memory_allocated() / 1e9  # Convert to GB
-    memory_reserved = torch.cuda.memory_reserved() / 1e9
-    logger.info(f"GPU memory allocated before generation: {memory_info:.2f} GB, reserved: {memory_reserved:.2f} GB")
-    
     logger.info(f"Starting audio generation for ID: {this_id}")
     
     # Check if generator is on GPU
