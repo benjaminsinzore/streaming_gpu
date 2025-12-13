@@ -1493,13 +1493,20 @@ def process_user_input_direct(user_text: str, session_id: str, websocket: WebSoc
 
 
 
+
+
 def audio_generation_thread_direct(text, output_file, session_id, websocket, user_id=None):
-    global current_generation_id, generator, config
+    """
+    Generate audio and send chunks directly to WebSocket with user context
+    """
+    global current_generation_id
     current_generation_id += 1
     this_id = current_generation_id
+    
     logger.info(f"Starting audio generation for ID: {this_id}, session: {session_id}, user_id: {user_id}")
-
+    
     try:
+        # Send generating status
         asyncio.run_coroutine_threadsafe(
             websocket.send_json({
                 "type": "audio_status",
@@ -1510,14 +1517,21 @@ def audio_generation_thread_direct(text, output_file, session_id, websocket, use
             }),
             loop
         )
-
-        # >>> ADD THIS BLOCK (missing in your current implementation) <<<
-        text_lower = preprocess_text_for_tts(text.lower())
+        
+        text_lower = text.lower()
+        text_lower = preprocess_text_for_tts(text_lower)
+        
         words = text.split()
         avg_wpm = 100
-        estimated_seconds = len(words) / (avg_wpm / 60)
+        words_per_second = avg_wpm / 60
+        estimated_seconds = len(words) / words_per_second
         max_audio_length_ms = int(estimated_seconds * 1000)
+        
 
+        # Add debug logging
+        logger.info(f"Sending to model queue: text='{text_lower[:50]}...'")
+        
+        # Send to model queue
         model_queue.put((
             text_lower,
             config.voice_speaker_id,
@@ -1526,18 +1540,41 @@ def audio_generation_thread_direct(text, output_file, session_id, websocket, use
             0.8,
             50
         ))
-        # <<< END ADD >>>
-
+        
+        generation_start = time.time()
         chunk_counter = 0
+        
+        # Add timeout counter
+        timeout_counter = 0
+        max_timeouts = 10
+        
         while True:
             try:
+
+                logger.info(f"Waiting for model result (attempt {timeout_counter + 1})...")
+                result = model_result_queue.get(timeout=1.0)
+                
+                if result is None:
+                    logger.info(f"Audio generation {this_id} - received None, breaking")
+                    break
+                    
+                if isinstance(result, Exception):
+                    logger.error(f"Audio generation {this_id} - error: {result}")
+                    raise result
                 result = model_result_queue.get(timeout=1.0)
                 if result is None:
+                    logger.info(f"Audio generation {this_id} - complete")
                     break
                 if isinstance(result, Exception):
+                    logger.error(f"Audio generation {this_id} - error: {result}")
                     raise result
+                
 
                 if chunk_counter == 0:
+                    first_chunk_time = time.time() - generation_start
+                    logger.info(f"Audio generation {this_id} - first chunk latency: {first_chunk_time*1000:.1f}ms")
+                    
+                    # Send first chunk status
                     asyncio.run_coroutine_threadsafe(
                         websocket.send_json({
                             "type": "audio_status",
@@ -1548,13 +1585,16 @@ def audio_generation_thread_direct(text, output_file, session_id, websocket, use
                         }),
                         loop
                     )
-
+                
                 chunk_counter += 1
-                audio_chunk = result.cpu().numpy().astype(np.float32)
+                audio_chunk = result
+                chunk_array = audio_chunk.cpu().numpy().astype(np.float32)
+                
+                # Send audio chunk directly to WebSocket
                 asyncio.run_coroutine_threadsafe(
                     websocket.send_json({
                         "type": "audio_chunk",
-                        "audio": audio_chunk.tolist(),
+                        "audio": chunk_array.tolist(),
                         "sample_rate": generator.sample_rate,
                         "gen_id": this_id,
                         "chunk_num": chunk_counter,
@@ -1563,13 +1603,19 @@ def audio_generation_thread_direct(text, output_file, session_id, websocket, use
                     }),
                     loop
                 )
+                
             except queue.Empty:
+                timeout_counter += 1
+                logger.warning(f"Model result queue empty (timeout {timeout_counter})")
+                if timeout_counter >= max_timeouts:
+                    logger.error(f"Audio generation {this_id} - timed out waiting for results")
+                    break
                 continue
             except Exception as e:
-                logger.error(f"Audio gen {this_id} error: {e}")
+                logger.error(f"Audio generation {this_id} - error: {e}")
                 break
-
-        # Save full audio (optional, or do it in model worker)
+        
+        # Send completion status
         asyncio.run_coroutine_threadsafe(
             websocket.send_json({
                 "type": "audio_status",
@@ -1580,7 +1626,9 @@ def audio_generation_thread_direct(text, output_file, session_id, websocket, use
             }),
             loop
         )
-
+        
+        logger.info(f"Audio generation {this_id} completed successfully for user_id: {user_id}")
+        
     except Exception as e:
         logger.error(f"Error in audio_generation_thread_direct: {e}")
         asyncio.run_coroutine_threadsafe(
@@ -1592,6 +1640,7 @@ def audio_generation_thread_direct(text, output_file, session_id, websocket, use
             }),
             loop
         )
+
 
 
 
