@@ -1571,7 +1571,7 @@ def audio_generation_thread_direct(text, output_file, session_id, websocket, use
                     timeout = 5.0  # 5 seconds for subsequent chunks
                 
                 logger.info(f"Waiting for model result (chunk {chunk_counter + 1}, timeout: {timeout:.1f}s)...")
-                result = model_result_queue.get(timeout=timeout)
+                result = model_result_queue.get(timeout=1.0)
                 
                 if result is None:
                     logger.info(f"Audio generation {this_id} - received completion signal (None)")
