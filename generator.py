@@ -361,14 +361,15 @@ class AudioStreamWriter:
             audio = torch.cat(self.audio_chunks)
             torchaudio.save(self.filename, audio.unsqueeze(0).cpu(), self.sample_rate)
 
-def load_csm_1b_local(model_path: str, device: str = "cpu", audio_num_codebooks: int = 32):
+def load_csm_1b_local(model_path: str, device: str = "gpu"):
     from functools import lru_cache
     from generator import Generator, Model
     
 
     print(f"Loading CSM-1B model from local checkpoint '{model_path}'...Hello!")
 
-    model = Model.from_pretrained(model_path)
+    # model = Model.from_pretrained(model_path)
+    model = Model.from_pretrained("sesame/csm-1b")
     model.eval()
 
     # Use float32 for stability (especially on GPU)
