@@ -608,6 +608,7 @@ def on_speech_end(audio_data, sample_rate):
     except Exception as e:
         logger.error(f"VAD callback failed: {e}")
 
+# ... (rest of your functions remain the same - process_pending_inputs, process_user_input, model_worker, etc.)
 
 def process_pending_inputs():
     global pending_user_inputs, is_speaking, interrupt_flag
@@ -758,138 +759,72 @@ def process_user_input(user_text, session_id="default"):
 
 
 
-
 def model_worker(cfg: CompanionConfig):
     global generator, model_thread_running
     logger.info("Hello! Model worker thread started")
-    
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         logger.info(f"Using device: {device}")
+        if device == "cuda":
+            logger.info(f"GPU: {torch.cuda.get_device_name(0)}")
 
         if generator is None:
             logger.info(f"About to load voice model from: {os.path.abspath(cfg.model_path)}")
             # Verify path exists
             if not os.path.exists(cfg.model_path):
                 raise FileNotFoundError(f"Model path not found: {cfg.model_path}")
-            
-            # Load with error handling
-            try:
-                generator = load_csm_1b_local(cfg.model_path, device)
-                logger.info(f"Voice model successfully loaded on {device}")
+            generator = load_csm_1b_local(cfg.model_path, device)
+
+            # Apply patch to bypass the problematic compiled method
+            if hasattr(generator._audio_tokenizer, '_to_encoder_framerate'):
+                original_method = generator._audio_tokenizer._to_encoder_framerate
                 
-                # DEBUG: Log the generator's generate method signature
-                if hasattr(generator, 'generate'):
-                    import inspect
-                    sig = inspect.signature(generator.generate)
-                    logger.info(f"Generator.generate signature: {sig}")
-            except Exception as e:
-                logger.error(f"Failed to load voice model: {e}")
-                model_thread_running.clear()
-                return
+                def patched_to_framerate(emb):
+                    # Force eager execution without compilation
+                    with torch.inference_mode(), torch.autocast(device_type='cpu', enabled=False):
+                        return original_method(emb)
+                
+                generator._audio_tokenizer._to_encoder_framerate = patched_to_framerate
+                print("Patched _to_encoder_framerate to prevent compilation errors")
+
+
+            logger.info(f"Voice model successfully loaded on {device}")
         else:
             logger.info("Voice model already loaded")
 
-        # Main loop
         while model_thread_running.is_set():
             try:
-                # Get request with timeout
-                request = model_queue.get(timeout=1.0)
-                
+                request = model_queue.get(timeout=0.1)
                 if request is None:
-                    logger.info("Received shutdown signal")
                     break
-                
-                # Unpack request - Based on your warmup code, I see it works with these parameters
-                (text, speaker_id, ref_segments, max_length, temperature, top_k) = request
-                
-                logger.info(f"Processing request: '{text[:50]}...', speaker_id={speaker_id}, segments={len(ref_segments)}")
-                
-                # Generate audio - TRY DIFFERENT PARAMETER COMBINATIONS
-                try:
-                    with torch.no_grad(), torch.inference_mode():
-                        # Try the parameters from your warmup code (which worked!)
-                        audio_chunk = generator.generate(
-                            text=text,
-                            speaker=speaker_id,  # Changed from speaker_id to speaker
-                            reference_segments=ref_segments,
-                            max_audio_length_ms=max_length,
-                            temperature=temperature,
-                            top_k=top_k
-                        )
-                    
-                    if audio_chunk is not None:
-                        logger.info(f"Generated audio chunk: {audio_chunk.shape}")
-                        model_result_queue.put(audio_chunk)
-                        # Also send completion signal
-                        model_result_queue.put(None)
-                    else:
-                        logger.error("Generator returned None!")
-                        model_result_queue.put(None)
-                        
-                except Exception as e:
-                    logger.error(f"Error during generation: {e}")
-                    import traceback
-                    logger.error(f"Traceback: {traceback.format_exc()}")
-                    
-                    # Try alternative parameter names
-                    try:
-                        logger.info("Trying alternative parameter names...")
-                        with torch.no_grad(), torch.inference_mode():
-                            # Alternative 1: Try without speaker parameter
-                            audio_chunk = generator.generate(
-                                text=text,
-                                reference_segments=ref_segments,
-                                max_audio_length_ms=max_length,
-                                temperature=temperature,
-                                top_k=top_k
-                            )
-                        
-                        if audio_chunk is not None:
-                            logger.info(f"Generated with alternative params: {audio_chunk.shape}")
-                            model_result_queue.put(audio_chunk)
-                            model_result_queue.put(None)
-                        else:
-                            model_result_queue.put(None)
-                    except Exception as e2:
-                        logger.error(f"Alternative also failed: {e2}")
-                        model_result_queue.put(None)
-                    
+                # ... rest of generation logic ...
+                model_result_queue.put(None)
             except queue.Empty:
-                # No request, continue waiting
                 continue
             except Exception as e:
-                logger.error(f"Error in model worker loop: {e}")
-                break
+                import traceback
+                logger.error(f"Error during generation: {e}\n{traceback.format_exc()}")
+                model_result_queue.put(Exception(str(e)))
 
     except Exception as e:
-        logger.critical(f"CRITICAL: model_worker failed: {e}")
         import traceback
-        logger.error(f"Traceback: {traceback.format_exc()}")
-    finally:
-        logger.info("Model worker thread exiting")
-        model_thread_running.clear()
-
-
-
-
+        logger.critical(f"CRITICAL: model_worker failed during model loading: {e}\n{traceback.format_exc()}")
+        # Signal failure to main thread
+        try:
+            model_result_queue.put(None)  # or put an exception
+        except:
+            pass
 
 def start_model_thread():
     global model_thread, model_thread_running
-
     if model_thread is not None and model_thread.is_alive():
-        return                        
-
+        return
     model_thread_running.set()
-    model_thread = threading.Thread(target=model_worker,
-                                    args=(config,),
-                                    daemon=True,
-                                    name="model_worker")
+    model_thread = threading.Thread(target=model_worker, args=(config,), daemon=True, name="model_worker")
     model_thread.start()
     logger.info("Started dedicated model worker thread")
 
-
-
+# ... (rest of your functions remain the same - send_to_all_clients, save_audio_and_trim, add_segment, etc.)
 
 saved_audio_paths = {
     "default": {
