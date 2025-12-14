@@ -759,7 +759,6 @@ def process_user_input(user_text, session_id="default"):
 
 
 
-
 def model_worker(cfg: CompanionConfig):
     global generator, model_thread_running
     logger.info("Hello! Model worker thread started")
@@ -767,8 +766,6 @@ def model_worker(cfg: CompanionConfig):
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         logger.info(f"Using device: {device}")
-        if device == "cuda":
-            logger.info(f"GPU: {torch.cuda.get_device_name(0)}")
 
         if generator is None:
             logger.info(f"About to load voice model from: {os.path.abspath(cfg.model_path)}")
@@ -780,6 +777,12 @@ def model_worker(cfg: CompanionConfig):
             try:
                 generator = load_csm_1b_local(cfg.model_path, device)
                 logger.info(f"Voice model successfully loaded on {device}")
+                
+                # DEBUG: Log the generator's generate method signature
+                if hasattr(generator, 'generate'):
+                    import inspect
+                    sig = inspect.signature(generator.generate)
+                    logger.info(f"Generator.generate signature: {sig}")
             except Exception as e:
                 logger.error(f"Failed to load voice model: {e}")
                 model_thread_running.clear()
@@ -797,17 +800,18 @@ def model_worker(cfg: CompanionConfig):
                     logger.info("Received shutdown signal")
                     break
                 
-                # Unpack request
+                # Unpack request - Based on your warmup code, I see it works with these parameters
                 (text, speaker_id, ref_segments, max_length, temperature, top_k) = request
                 
                 logger.info(f"Processing request: '{text[:50]}...', speaker_id={speaker_id}, segments={len(ref_segments)}")
                 
-                # Generate audio
+                # Generate audio - TRY DIFFERENT PARAMETER COMBINATIONS
                 try:
                     with torch.no_grad(), torch.inference_mode():
+                        # Try the parameters from your warmup code (which worked!)
                         audio_chunk = generator.generate(
                             text=text,
-                            speaker_id=speaker_id,
+                            speaker=speaker_id,  # Changed from speaker_id to speaker
                             reference_segments=ref_segments,
                             max_audio_length_ms=max_length,
                             temperature=temperature,
@@ -817,6 +821,8 @@ def model_worker(cfg: CompanionConfig):
                     if audio_chunk is not None:
                         logger.info(f"Generated audio chunk: {audio_chunk.shape}")
                         model_result_queue.put(audio_chunk)
+                        # Also send completion signal
+                        model_result_queue.put(None)
                     else:
                         logger.error("Generator returned None!")
                         model_result_queue.put(None)
@@ -825,7 +831,29 @@ def model_worker(cfg: CompanionConfig):
                     logger.error(f"Error during generation: {e}")
                     import traceback
                     logger.error(f"Traceback: {traceback.format_exc()}")
-                    model_result_queue.put(None)
+                    
+                    # Try alternative parameter names
+                    try:
+                        logger.info("Trying alternative parameter names...")
+                        with torch.no_grad(), torch.inference_mode():
+                            # Alternative 1: Try without speaker parameter
+                            audio_chunk = generator.generate(
+                                text=text,
+                                reference_segments=ref_segments,
+                                max_audio_length_ms=max_length,
+                                temperature=temperature,
+                                top_k=top_k
+                            )
+                        
+                        if audio_chunk is not None:
+                            logger.info(f"Generated with alternative params: {audio_chunk.shape}")
+                            model_result_queue.put(audio_chunk)
+                            model_result_queue.put(None)
+                        else:
+                            model_result_queue.put(None)
+                    except Exception as e2:
+                        logger.error(f"Alternative also failed: {e2}")
+                        model_result_queue.put(None)
                     
             except queue.Empty:
                 # No request, continue waiting
@@ -841,8 +869,6 @@ def model_worker(cfg: CompanionConfig):
     finally:
         logger.info("Model worker thread exiting")
         model_thread_running.clear()
-
-
 
 
 
