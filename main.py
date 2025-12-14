@@ -608,7 +608,6 @@ def on_speech_end(audio_data, sample_rate):
     except Exception as e:
         logger.error(f"VAD callback failed: {e}")
 
-# ... (rest of your functions remain the same - process_pending_inputs, process_user_input, model_worker, etc.)
 
 def process_pending_inputs():
     global pending_user_inputs, is_speaking, interrupt_flag
@@ -759,9 +758,12 @@ def process_user_input(user_text, session_id="default"):
 
 
 
+
+
 def model_worker(cfg: CompanionConfig):
     global generator, model_thread_running
     logger.info("Hello! Model worker thread started")
+    
     try:
         device = "cuda" if torch.cuda.is_available() else "cpu"
         logger.info(f"Using device: {device}")
@@ -773,47 +775,74 @@ def model_worker(cfg: CompanionConfig):
             # Verify path exists
             if not os.path.exists(cfg.model_path):
                 raise FileNotFoundError(f"Model path not found: {cfg.model_path}")
-            generator = load_csm_1b_local(cfg.model_path, device)
-
-            # Apply patch to bypass the problematic compiled method
-            if hasattr(generator._audio_tokenizer, '_to_encoder_framerate'):
-                original_method = generator._audio_tokenizer._to_encoder_framerate
-                
-                def patched_to_framerate(emb):
-                    # Force eager execution without compilation
-                    with torch.inference_mode(), torch.autocast(device_type='cpu', enabled=False):
-                        return original_method(emb)
-                
-                generator._audio_tokenizer._to_encoder_framerate = patched_to_framerate
-                print("Patched _to_encoder_framerate to prevent compilation errors")
-
-
-            logger.info(f"Voice model successfully loaded on {device}")
+            
+            # Load with error handling
+            try:
+                generator = load_csm_1b_local(cfg.model_path, device)
+                logger.info(f"Voice model successfully loaded on {device}")
+            except Exception as e:
+                logger.error(f"Failed to load voice model: {e}")
+                model_thread_running.clear()
+                return
         else:
             logger.info("Voice model already loaded")
 
+        # Main loop
         while model_thread_running.is_set():
             try:
-                request = model_queue.get(timeout=0.1)
+                # Get request with timeout
+                request = model_queue.get(timeout=1.0)
+                
                 if request is None:
+                    logger.info("Received shutdown signal")
                     break
-                # ... rest of generation logic ...
-                model_result_queue.put(None)
+                
+                # Unpack request
+                (text, speaker_id, ref_segments, max_length, temperature, top_k) = request
+                
+                logger.info(f"Processing request: '{text[:50]}...', speaker_id={speaker_id}, segments={len(ref_segments)}")
+                
+                # Generate audio
+                try:
+                    with torch.no_grad(), torch.inference_mode():
+                        audio_chunk = generator.generate(
+                            text=text,
+                            speaker_id=speaker_id,
+                            reference_segments=ref_segments,
+                            max_audio_length_ms=max_length,
+                            temperature=temperature,
+                            top_k=top_k
+                        )
+                    
+                    if audio_chunk is not None:
+                        logger.info(f"Generated audio chunk: {audio_chunk.shape}")
+                        model_result_queue.put(audio_chunk)
+                    else:
+                        logger.error("Generator returned None!")
+                        model_result_queue.put(None)
+                        
+                except Exception as e:
+                    logger.error(f"Error during generation: {e}")
+                    import traceback
+                    logger.error(f"Traceback: {traceback.format_exc()}")
+                    model_result_queue.put(None)
+                    
             except queue.Empty:
+                # No request, continue waiting
                 continue
             except Exception as e:
-                import traceback
-                logger.error(f"Error during generation: {e}\n{traceback.format_exc()}")
-                model_result_queue.put(Exception(str(e)))
+                logger.error(f"Error in model worker loop: {e}")
+                break
 
     except Exception as e:
+        logger.critical(f"CRITICAL: model_worker failed: {e}")
         import traceback
-        logger.critical(f"CRITICAL: model_worker failed during model loading: {e}\n{traceback.format_exc()}")
-        # Signal failure to main thread
-        try:
-            model_result_queue.put(None)  # or put an exception
-        except:
-            pass
+        logger.error(f"Traceback: {traceback.format_exc()}")
+    finally:
+        logger.info("Model worker thread exiting")
+        model_thread_running.clear()
+
+
 
 
 
